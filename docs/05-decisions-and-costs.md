@@ -23,7 +23,7 @@ Replay 2022–26 weather through the fitted bucket model under each intervention
 | Storm tank at a works | **£1,850–2,100 /m³** | [Ofwat PR24 FD enhancement appendix](https://www.ofwat.gov.uk/wp-content/uploads/2024/12/PR24-final-determinations-Expenditure-allowances-Enhancement-cost-modelling-appendix.pdf), Table 2: STW grey storage £1,853 (DD forecast), £2,103 (FD forecast), £1,941 (historical) | Good |
 | Network storage | **£2,550–2,935 /m³** | Same table | Good |
 | Sewer sealing / lining | **About £100k–250k /km (assumption)** | [Southern Water SRN-DDR-050](https://www.southernwater.co.uk/media/ty4hzpov/srn-ddr-050-resilience-infiltration-enhancement-cost-evidence-case.pdf) redacts its unit rates. Its £38.9m programme with 177.4 km by the "innovative" method implies roughly £175k/km blended (our derivation). Trade CIPP prices run £80–250/m. | Low |
-| Oxford STW upgrade | **> £270m, due 2032** (FFT 1,040 → 1,434 l/s; storm tanks 6,831 → 18,167 m³, tank figures unverified) | [Thames Water site page](https://www.thameswater.co.uk/about-us/performance/river-health/frequently-asked-questions/information-about-specific-sites); the GISMP's £130m is out of date | Good. Use it as the "status quo plan" comparator ([docs/10 §3.4](10-model-v2-plan.md#34-layer-4--placement)). |
+| Oxford STW upgrade | £130m+ (larger tanks, more FFT) | Oxford GISMP | Good. Use it as the "status quo plan" comparator. |
 
 Scale check: 10,000 m³ of extra storage ≈ £20m. Sealing 20% of the 1,485 km network (about 300 km) ≈ £30–75m.
 
