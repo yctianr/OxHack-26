@@ -12,7 +12,6 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 import pandas as pd
-from scipy.signal import lfilter
 from common import FOLDS, INT, RAW, TZ, load, rain_for
 import wb
 warnings.filterwarnings("ignore")
@@ -46,7 +45,7 @@ def run_one(permit):
     tdv_d = T[permit].reindex(ldays).values
     ref = dict(foul=w.foul_ls * 3.6, cap=(w.fft_ls if w.fft_ls > 0 else w.tdv_p99_m3d / 86.4) * 3.6,
                q_med=float(np.median(wet_h)))
-    V = OXFORD_TANK if permit == "TEMP.2827" else None
+    V = OXFORD_TANK if permit == "TEMP.2827" and "WB_TANK_H" not in os.environ else None
     y, m = lab[permit]
     valid_ud = np.bincount(utc_day, weights=m.astype(float), minlength=len(udays)) / np.bincount(utc_day) >= 0.9
     y_ud = (np.bincount(utc_day, weights=np.where(m, y, 0) > 0, minlength=len(udays)) > 0).astype(float)
@@ -71,18 +70,15 @@ def run_one(permit):
             cnt = np.stack([np.bincount(utc_day, weights=o, minlength=nud) for o in on])
             out[f"{tag}_p"], out[f"{tag}_hours"] = (cnt > 0).mean(0), cnt.mean(0)
             out[f"{tag}_vol_m3"] = np.bincount(utc_day, weights=ens.mean(0), minlength=nud)
-        F, A, tau_f, k, p1, p2, C = th
+        F, A, tau_f, k, p1, p2, C, As = th
         params.append(dict(permit=permit, site=w.site, fold=fold, mode=["soil", "river"][mode], fit_err=cost,
                            test_err=test_err, sigma=sigma, rho=rho, foul_m3d=F * 24, oric_foul_m3d=w.foul_ls * 86.4,
-                           area_ha=A, tau_fast_h=tau_f, k=k, tau_g_d=p1 if mode == 0 else np.nan,
-                           dmax_mm=p2 if mode == 0 else np.nan, q0_m3s=p1 if mode == 1 else np.nan,
+                           area_ha=A, area_sat_ha=As, tau_fast_h=tau_f, k=k, tau_g_d=p1 if mode == 0 else np.nan,
+                           dmax_mm=p2, q0_m3s=p1 if mode == 1 else np.nan,
                            cap_m3d=C * 24, oric_cap_m3d=w.fft_ls * 86.4, tank_m3=V if V else wb.TANK_HOURS * C,
                            peak_infil_m3d=np.nan, oric_imax_m3d=w.imax_ls * 86.4, spill_start_frac=s_frac,
                            verdict=w.verdict))
-        # infiltration = inflow - foul - runoff; recompute runoff exactly for the physical-meaning table
-        af = np.exp(-1 / tau_f)
-        runoff = 10 * A * lfilter([1 - af], [1, -af], np.r_[rain[:wk.n_warm], rain])[wk.n_warm:]
-        inf_d = wb.daily_sum(q - F - runoff, wk.day, nday)
+        inf_d = wb.daily_sum(wk.run(mode, th, V, parts=True)[3], wk.day, nday)
         params[-1]["peak_infil_m3d"] = float(np.nanquantile(inf_d[ldays < t0], 0.95))
         params[-1]["summer_infil_m3d"] = float(np.median(inf_d[(ldays < t0) & ldays.month.isin([7, 8])]))
         preds.append(pd.DataFrame({"site": permit, "fold": fold, "date": udays, **out}))
@@ -99,11 +95,11 @@ if __name__ == "__main__":
     P = pd.DataFrame([r for ps, _, _ in res for r in ps])
     D = pd.concat([d for _, ds, _ in res for d in ds], ignore_index=True)
     Fl = pd.concat([d for _, _, fs in res for d in fs], ignore_index=True)
-    tag = "" if not sys.argv[1:] else "_subset"
+    tag = os.environ.get("WB_OUT", "" if not sys.argv[1:] else "_subset")    # suffix for experiment runs
     P.to_csv(os.path.join(INT, f"wb_params{tag}.csv"), index=False)
     D.to_pickle(os.path.join(INT, f"wb_predictions{tag}.pkl"))
     Fl.to_pickle(os.path.join(INT, f"wb_flow{tag}.pkl"))
     pd.set_option("display.width", 250)
-    cols = ["site", "fold", "mode", "fit_err", "test_err", "sigma", "foul_m3d", "oric_foul_m3d", "area_ha", "tau_fast_h",
+    cols = ["site", "fold", "mode", "fit_err", "test_err", "sigma", "foul_m3d", "oric_foul_m3d", "area_ha", "area_sat_ha", "tau_fast_h",
             "tau_g_d", "dmax_mm", "q0_m3s", "cap_m3d", "oric_cap_m3d", "peak_infil_m3d", "oric_imax_m3d", "summer_infil_m3d", "spill_start_frac"]
     print(P[cols].round(2).to_string(index=False))
