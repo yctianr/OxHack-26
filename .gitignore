@@ -4,3 +4,4 @@ __pycache__/
 .env
 data/raw/
 .ipynb_checkpoints/
+prototype/index.html
