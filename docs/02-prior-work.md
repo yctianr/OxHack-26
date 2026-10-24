@@ -1,0 +1,17 @@
+# 02 · Prior work and our gap
+
+**Gap:** no open tool issues a **calibrated, forward-looking spill probability per overflow** that uses a **groundwater state**. Existing work maps spills after they happen, detects them retrospectively, explains drivers across sites, or is proprietary.
+
+| Work | What it does | What it doesn't |
+| --- | --- | --- |
+| [Hammond et al. 2021, npj Clean Water](https://doi.org/10.1038/s41545-021-00108-3). Hammond is WASP's data scientist. | ML on daily effluent flow at 2 treatment works. AUC > 96% for spill vs no-spill. Flagged 926 of 7,160 "no-spill" days as likely spills, suggesting non-compliant discharges in 2009–2020. | Retrospective detection only; no groundwater; 2 sites |
+| [Maes-Prior, Dobson & Mijic 2026, WST](https://www.citedrive.com/en/discovery/drivers-of-wastewater-dynamics-a-statistical-analysis-of-englands-large-wastewater-treatment-works/) | Linear regression + random forest over 951 English sewersheds. Precipitation dominates per-capita flow and spill occurrence. | Cross-sectional drivers; no forecast or decisions |
+| [WWCompose preprint](https://www.researchsquare.com/article/rs-10040792/v1) (abstract only, not peer reviewed) | Splits daily influent into rainfall, soil-moisture and groundwater parts for about 2,900 English works. Mean KGE 0.68. | Models flow, not spills. **Closest to our bucket model: cite it and position against it.** |
+| [StormHarvester × Southern Water](https://swan-forum.com/case-studies/stormharvester-southern-water-case-study/) | Per-site ML with hyperlocal rain. 25% of spills came from infiltration sites, which tracked groundwater level and its rate of change. Those sites spilled continuously Jan–Apr on small rain and stayed dry in summer after big storms. | Proprietary; no metrics published |
+| EA short-term pollution risk prediction (bathing water API) | Daily normal / increased flag at Wolvercote Mill Stream, May–Sep | Binary, seasonal, mostly rain-driven, method not public. **A baseline to beat.** |
+| [POOPy](https://github.com/AlexLipp/POOPy) / sewagemap.co.uk (Lipp, Dawe, Balaji) | Live EDM for all companies + downstream river trace on a D8 flow grid | Descriptive only; no dilution or flow. Reuse its downstream trace. |
+| [Top of the Poops](https://www.top-of-the-poops.org/explore) | League tables. Explore view animates rain under overflow dots and **labels days "Dry spill", "Still spilling", "Wet spell: more sewage than the rain explains"** (verified live) | **Already does anomaly flagging**, so our unexplained-spill feature is not new. No forecast and no calibrated probability. |
+| [WASP](https://www.ofwat.gov.uk/wp-content/uploads/2023/05/WASP-Response-to-Ofwat-consultation-on-storm-overflows.-1.pdf) | Joins EDM with rainfall to flag spills outside permit conditions | Rules-based; no groundwater; not probabilistic |
+| Thames Water Oxford GISMP | Eyeballs monthly rainfall against monthly spills | Concludes there is "insufficient evidence to support the validity of this correlation". **Our opening line.** |
+
+**Pitch in one line:** an open, per-overflow, calibrated daily spill forecast (chance, duration, and an estimated volume at Oxford STW) with a groundwater/infiltration state. It is back-tested out of sample against persistence, a rain-threshold rule and the EA bathing-water flag. Its residuals flag dry-weather spills.
