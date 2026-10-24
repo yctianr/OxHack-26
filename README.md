@@ -19,6 +19,7 @@ docs/
   07-risks-and-corrections.md
   08-build-plan.md          hour-by-hour to the deadline (v1)
   09-plan-review.md         review of the v1 plan
+  12-data-guide.md          every dataset: raw vs cleaned, what was fixed, how to rebuild
   11-system-review.md       first-principles review: data audit, corrected evaluation, explainability
   10-model-v2-plan.md       CURRENT PLAN: decision log, bathtub model, volume, placement, 3D river map
   sources.md
