@@ -71,16 +71,26 @@ def thames_alerts(name=None, max_pages=None):
         q = {"limit": 1000, "offset": off}
         if name:
             q["locationName"] = name
-        d = get_json(f"{TW}/alerts?{urllib.parse.urlencode(q)}")
-        items = d.get("items", [])
+        # Under rate limiting the API can answer 200 with an empty page mid-history, so retry
+        # an empty page a few times before treating it as the end.
+        for k in range(5):
+            d = get_json(f"{TW}/alerts?{urllib.parse.urlencode(q)}")
+            items = d.get("items", [])
+            if items or not off:
+                break
+            print(f"  empty page at offset {off}, retry {k + 1}", file=sys.stderr)
+            time.sleep(5 * (k + 1))
         rows += items
         page += 1
         print(f"  page {page}: {len(items)} rows (oldest {items[-1]['datetime'] if items else '-'})", file=sys.stderr)
         if len(items) < 1000 or (max_pages and page >= max_pages):
             break
         off += 1000
-        time.sleep(0.25)  # stay well under the ~5 req/s limit reported by third parties
+        time.sleep(0.5)  # stay under the API's rate limit (429s seen at 0.25 s)
     fields = ["locationName", "permitNumber", "locationGridRef", "x", "y", "receivingWaterCourse", "alertType", "datetime"]
+    # New alerts arriving mid-fetch shift the newest-first offsets and repeat rows; drop the repeats.
+    seen = set()
+    rows = [r for r in rows if not (tuple(r.get(k) for k in fields) in seen or seen.add(tuple(r.get(k) for k in fields)))]
     suffix = f"_{name.lower().replace(' ', '_')}" if name else ""
     write_csv(os.path.join(RAW, f"thames_alerts{suffix}.csv"), rows, fields)
 
