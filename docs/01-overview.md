@@ -35,5 +35,6 @@ Sewage works may discharge untreated sewage into rivers only in storms, and only
 | [07-oxford.md](07-oxford.md) | Oxford context: Thames Water's plan, Port Meadow, the 19–24 Oct event |
 | [08-prior-work.md](08-prior-work.md) | Prior work and our gap |
 | [09-handover.md](09-handover.md) | State, decisions, next steps, gotchas |
+| [10-water-quality.md](10-water-quality.md) | E. coli and ammonia every 100 m of river: safe to swim? safe for fish? |
 | [sources.md](sources.md) | Every source opened |
 | [archive/](archive/README.md) | Superseded plans and reviews |

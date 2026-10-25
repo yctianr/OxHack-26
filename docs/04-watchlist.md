@@ -2,7 +2,7 @@
 
 The watchlist screens 53 Thames Water treatment works around Oxford for spills that shouldn't have happened, and ranks them for inspection. Result: **7 strong leads and 14 moderate**; 7 of the leads had no Thames Water investigation in its 2025 return.
 
-Code: `scripts/web/watchlist.py` → `web/watchlist/data.json`, shown on the website's "Inspect works" tab ([06-website.md](06-website.md)).
+Code: `scripts/web/watchlist.py` → `web/watchlist/data.json`. The website no longer shows it (the main page, `web/index.html`, was removed).
 
 ## Two tests
 

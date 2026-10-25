@@ -11,12 +11,13 @@ Built for **OxHack 2026** (HRT prize: "Best Use of Data for Predictions and Deci
 Everything the site shows is pre-built in `web/`: no data download or Python packages needed.
 
 ```bash
-python3 -m http.server 8000 -d web      # then open http://localhost:8000
+python3 -m http.server 8000 -d web      # then open http://localhost:8000/scenario.html
 ```
 
 - **Use the server, not a double-click:** browsers block `file://` pages from loading their data.
 - **It needs internet** for the map and chart libraries.
-- **`index.html`** opens on the regulator watchlist ("Inspect works"); "Spills by day" (`#day`) shows both models day by day. **`scenario.html`** lets you change the rain at any overflow and reruns the physics model in the browser.
+- **`scenario.html`** lets you change the rain at any overflow and reruns the physics model in the browser.
+- **`river.html`** shows E. coli and ammonia every 100 m of river, past and forecast: hover over a river for "safe to swim?" and "safe for fish?".
 - **To host it**, upload `web/` to any static host (e.g. <https://app.netlify.com/drop>).
 
 More: [docs/06-website.md](docs/06-website.md).
@@ -31,7 +32,7 @@ scripts/model/        1–7 data, cleaning and the statistical model; 8–10 and
 scripts/web/          builds web/data/*.json and web/watchlist/data.json (order in scripts/web/README.md)
 scripts/fetch_data.py Thames Water alerts and status, EA Hydrology, EA LIDAR (stdlib only)
 scripts/archive/      pre-audit exploration (superseded)
-web/                  the website (static): index.html, scenario.html and pre-built data
+web/                  the website (static): scenario.html and pre-built data
 UI-first-draft.html   Keira's 2D design that scenario.html follows
 prototype/            early dummy-data UI prototype
 edm_datasets/, tdv_datasets/, Rainfall Data/   teammates' downloads and cleaning (cross-checks; the pipeline doesn't read them)
@@ -55,7 +56,7 @@ for s in 1_fetch_gauges 2_sites 3_audit 4_build_clean 5_evaluate 6_site_cards; d
 # 4. physics water balance (8 also downloads daily evaporation from Open-Meteo)
 for s in 8_wb_prep 9_wb_fit 10_wb_evaluate 11_forecast; do python scripts/model/$s.py; done
 # 5. website data (extra packages: pip install pyproj rasterio pillow)
-for s in rivers terrain texture data physics whatif build_stats watchlist; do python scripts/web/$s.py; done
+for s in rivers terrain texture data physics whatif build_stats watchlist quality; do python scripts/web/$s.py; done
 ```
 
 ## Refresh the forecast
@@ -65,7 +66,7 @@ The site's last 7 days are a physics forecast made when the data was last built.
 ```bash
 python scripts/fetch_data.py thames-alerts && python scripts/fetch_data.py events && python scripts/model/1_fetch_gauges.py
 for s in 3_audit 4_build_clean 5_evaluate 6_site_cards 8_wb_prep 9_wb_fit 10_wb_evaluate 11_forecast; do python scripts/model/$s.py; done
-for s in data whatif watchlist physics build_stats; do python scripts/web/$s.py; done
+for s in data whatif watchlist physics build_stats quality; do python scripts/web/$s.py; done
 ```
 
 About 25 minutes in all, most of it the alert download. More: [docs/02-physical-model.md](docs/02-physical-model.md#forecast).

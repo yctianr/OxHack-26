@@ -34,7 +34,7 @@ Rain and river flow are cleaned once (`4_build_clean.py`) and used by both model
 
 | Dataset | Physics model (main) | Statistical backup | Watchlist | Website |
 | --- | --- | --- | --- | --- |
-| Treated volume (1.6) | what it is fitted to; capacity; error size | | treated flow on all-day spill days (Test A) | "Inspect works" chart |
+| Treated volume (1.6) | what it is fitted to; capacity; error size | | treated flow on all-day spill days (Test A) | – |
 | Permitted flow, ORIC (1.7) | starting value and bounds for foul flow; independent checks | | the 80% screen (Test A) | FFT in the evidence file |
 | Storm-tank volumes (1.10) | tank size at 5 works (2 h at capacity elsewhere) | | | tank and its source on each card |
 | Evaporation (1.8) | soil-moisture store | | | in-browser rain what-if |

@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Spillcast · Rain scenarios</title>
 <meta name="description" content="Pick a day and change the rain at one overflow: the 3D map shows how the chance of a sewage spill, and the sewage pressure downstream, responds.">
 <style>
-/* Layout and controls follow Keira's UI-first-draft.html; the map is the 3D deck.gl map from index.html. */
+/* Layout and controls follow Keira's UI-first-draft.html; the map is a 3D deck.gl map. */
 :root{color-scheme:light;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#21392e;background:#f8faf8}*{box-sizing:border-box}body{margin:0;padding:16px}
 .app{max-width:1280px;margin:auto;border:1px solid #d8e2da;border-radius:16px;background:#fff;overflow:hidden}
 .header,.controls{padding:16px 20px;border-bottom:1px solid #d8e2da;display:flex;justify-content:space-between;align-items:center;gap:20px}
@@ -45,8 +45,7 @@ button:focus-visible,input:focus-visible{outline:2px solid #247e65;outline-offse
 @media (prefers-reduced-motion:reduce){.switch span{transition:none}}
 </style></head>
 <body><main class="app">
-<header class="header"><div><h1>Spillcast</h1><p class="sub">Rain scenarios for sewage overflows around Oxford</p></div>
-  <div class="hright"><a class="pill" href="./">Inspect works →</a></div></header>
+<header class="header"><div><h1>Spillcast</h1><p class="sub">Rain scenarios for sewage overflows around Oxford</p></div></header>
 
 <section class="controls">
   <div class="control">
@@ -109,7 +108,7 @@ button:focus-visible,input:focus-visible{outline:2px solid #247e65;outline-offse
     </div>
   </aside>
 </div>
-<footer class="foot"><strong>Model estimates, not measurements.</strong> The main model is a physics water balance of each treatment works: foul flow, rain off hard and saturated ground, and groundwater flow into the sewer; the works treats up to its capacity, a storm tank holds the excess, and only what the tank cannot hold spills. It is fitted only to each works' daily treated flow, never to its spill records, and scored on a test year it never saw (Oct 2025 to Oct 2026). Storm tanks hold 2 hours of flow at capacity unless a source states their size. Overflows with no treated-flow data use a statistical model of rain and wet ground as the backup. The rainfall slider reruns that day of the model with more or less rain. No public data measures spill volume, so these are estimates, and the glow is relative, not water quality. Data: Thames Water EDM, Environment Agency rain and flow gauges and LIDAR, OS Open Rivers (contains OS data © Crown copyright). Built at OxHack 2026. <a href="./">The regulator watchlist is on the main page.</a></footer>
+<footer class="foot"><strong>Model estimates, not measurements.</strong> The main model is a physics water balance of each treatment works: foul flow, rain off hard and saturated ground, and groundwater flow into the sewer; the works treats up to its capacity, a storm tank holds the excess, and only what the tank cannot hold spills. It is fitted only to each works' daily treated flow, never to its spill records, and scored on a test year it never saw (Oct 2025 to Oct 2026). Storm tanks hold 2 hours of flow at capacity unless a source states their size. Overflows with no treated-flow data use a statistical model of rain and wet ground as the backup. The rainfall slider reruns that day of the model with more or less rain. No public data measures spill volume, so these are estimates, and the glow is relative, not water quality. Data: Thames Water EDM, Environment Agency rain and flow gauges and LIDAR, OS Open Rivers (contains OS data © Crown copyright). Built at OxHack 2026.</footer>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/deck.gl@9.4.0/dist.min.js"></script>
