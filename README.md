@@ -1,6 +1,6 @@
 # Spillcast
 
-Forecasting sewage spills from storm overflows around Oxford, explaining them (rain vs groundwater), and turning the forecasts into decisions: is it safe to swim at Port Meadow, do bigger storm tanks or sealed sewers buy more, and which spills does the weather not explain.
+Forecasting sewage spills from storm overflows around Oxford, quantifying them (rain vs volumn of sewage), and predicting the concentration and spread of sewage in the rivers nearby and turning the forecasts into decisions of where to improve sewage systems.
 
 Built for **OxHack 2026**, targeting the HRT prize "Best Use of Data for Predictions and Decision Making". Deadline Sun 25 Oct 2026, 16:00 GMT.
 
