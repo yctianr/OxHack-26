@@ -24,15 +24,16 @@ input[type=range]{width:100%;accent-color:#247e65;cursor:pointer}input[type=rang
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:#c9d6cf;font-size:13px;pointer-events:none}
 .mapnote{position:absolute;left:12px;bottom:10px;color:#b9c8c1;font-size:11px;pointer-events:none;text-shadow:0 1px 2px #000}
 .tip{font:12px system-ui,sans-serif;line-height:1.4}
-.side{border-left:1px solid #d8e2da;padding:13px;min-width:0}.side h3{margin:0 0 10px;font-size:15px}
+.side{border-left:1px solid #d8e2da;padding:13px;min-width:0;position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto}
+.side.picked .search,.side.picked .list{display:none}.side h3{margin:0 0 10px;font-size:15px}
 .search{width:100%;padding:10px;border:1px solid #d8e2da;border-radius:8px;margin-bottom:10px;font:inherit}
 .list{max-height:250px;overflow:auto;display:grid;gap:5px}
 .site{border:1px solid #e0e8e0;background:#fff;color:#23392c;border-radius:7px;padding:8px;cursor:pointer;display:flex;align-items:center;gap:7px;text-align:left;font:12px system-ui,sans-serif}
 .site.sel{border-color:#288267;background:#f0f8f1}.site i{width:11px;height:11px;border-radius:50%;flex:none}.site span{flex:1;min-width:0}.site strong{white-space:nowrap}
-.detail{margin-top:14px;border:1px solid #d8e2da;border-radius:10px;background:#f7faf7;padding:13px}.detail h3{margin:3px 0 5px}
-.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
-.stat{padding:10px;border:1px solid #e0e8e0;background:#fff;border-radius:7px}.stat strong{display:block;font-size:17px;font-variant-numeric:tabular-nums}
-.status{font-size:18px;font-weight:800}.status.red{color:#c93a3a}.status.green{color:#208650}.status.grey{color:#677a6b}
+.detail{margin-top:14px;border:1px solid #d8e2da;border-radius:10px;background:#f7faf7;padding:13px}.side.picked .detail{margin-top:0}.detail h3{margin:3px 0 5px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
+.stat{padding:6px 8px;border:1px solid #e0e8e0;background:#fff;border-radius:7px;line-height:1.25}.stat strong{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+.status{font-size:16px;font-weight:800}.status.red{color:#c93a3a}.status.green{color:#208650}.status.grey{color:#677a6b}
 .foot{padding:13px 18px;border-top:1px solid #d8e2da;color:#667b6b;font-size:12px;line-height:1.5}.foot a{color:#247e65}
 .gradient{height:12px;border-radius:12px;background:linear-gradient(90deg,#3c8ea6,#f0a33a,#ff5d4a)}
 .legend{padding:14px 18px;border-top:1px solid #d8e2da}
@@ -40,12 +41,12 @@ input[type=range]{width:100%;accent-color:#247e65;cursor:pointer}input[type=rang
 .reset:disabled{opacity:.5;cursor:default}
 .hidden{display:none!important}
 button:focus-visible,input:focus-visible{outline:2px solid #247e65;outline-offset:1px}
-@media(max-width:830px){body{padding:8px}.controls>*{flex:1 1 100%;min-width:0}.value{white-space:normal;text-align:right;font-size:16px}.cams{max-width:calc(100% - 24px)}.body{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid #d8e2da}.list{max-height:180px}.header{flex-wrap:wrap}.map{height:58vh}}
+@media(max-width:830px){body{padding:8px}.side{position:static;max-height:none}.controls>*{flex:1 1 100%;min-width:0}.value{white-space:normal;text-align:right;font-size:16px}.cams{max-width:calc(100% - 24px)}.body{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid #d8e2da}.list{max-height:180px}.header{flex-wrap:wrap}.map{height:58vh}}
 @media (prefers-reduced-motion:reduce){.switch span{transition:none}}
 </style></head>
 <body><main class="app">
 <header class="header"><div><h1>Spillcast</h1><p class="sub">Rain scenarios for sewage overflows around Oxford</p></div>
-  <div class="hright"><span class="pill" id="pillCount">Test year</span><a class="pill" href="./">Inspect works →</a></div></header>
+  <div class="hright"><a class="pill" href="./">Inspect works →</a></div></header>
 
 <section class="controls">
   <div class="control">
@@ -80,14 +81,14 @@ button:focus-visible,input:focus-visible{outline:2px solid #247e65;outline-offse
     </div>
   </div>
 
-  <aside class="side">
+  <aside class="side" id="side">
     <h3>Overflows <span id="count" class="sub" style="float:right"></span></h3>
     <input id="search" class="search" type="search" placeholder="Search overflows..." aria-label="Search overflows">
     <div class="list" id="list"></div>
     <div id="empty" class="detail"><strong>Select an overflow</strong><p class="sub">Choose a marker or a name to see its chance of spilling, what its monitor recorded, and a rainfall slider for that day.</p></div>
     <div id="details" class="detail hidden">
-      <div style="display:flex;justify-content:space-between;gap:10px"><div><div class="sub">SELECTED OVERFLOW</div><h3 id="site-name"></h3><div id="site-water" class="sub"></div></div><button id="close" class="reset" aria-label="Close details">✕</button></div>
-      <div id="status" class="status" style="margin-top:12px" aria-live="polite"></div>
+      <div style="display:flex;justify-content:space-between;gap:10px"><div><div class="sub">SELECTED OVERFLOW</div><h3 id="site-name"></h3><div id="site-water" class="sub"></div></div><button id="close" class="reset" style="align-self:flex-start;white-space:nowrap" aria-label="Back to all overflows">← All</button></div>
+      <div id="status" class="status" style="margin-top:8px" aria-live="polite"></div>
       <div class="detail-grid">
         <div class="stat"><div class="sub">Chance of a spill</div><strong id="st-chance"></strong><span class="sub" id="st-chance-sub"></span></div>
         <div class="stat"><div class="sub">Monitor recorded</div><strong id="st-obs"></strong><span class="sub">that day</span></div>
@@ -96,15 +97,15 @@ button:focus-visible,input:focus-visible{outline:2px solid #247e65;outline-offse
         <div class="stat"><div class="sub">Statistical model</div><strong id="st-stat"></strong><span class="sub">backup, same day</span></div>
         <div class="stat"><div class="sub">Storm tank</div><strong id="st-tank"></strong><span class="sub" id="st-tank-sub"></span></div>
       </div>
-      <p id="vol-note" class="small"></p>
-      <div id="rainBox" style="border-top:1px solid #d8e2da;margin-top:14px;padding-top:13px">
+      <div id="rainBox" style="border-top:1px solid #d8e2da;margin-top:10px;padding-top:10px">
         <div style="display:flex;justify-content:space-between"><strong>Rainfall scenario</strong><b id="rain-mm">–</b></div>
         <div class="sub" id="rain-sub">24-hour rainfall at this overflow</div>
         <input id="rain" type="range" min="0" max="100" step="0.1" value="0" aria-label="Rainfall at the selected overflow, in millimetres">
         <div class="ticks"><span>0 mm</span><span>25</span><span>50</span><span>75</span><span>100 mm</span></div>
-        <button id="reset" class="reset" style="margin-top:12px">Reset to the rain that fell</button>
+        <button id="reset" class="reset" style="margin-top:8px">Reset to the rain that fell</button>
         <p id="explanation" class="small"></p>
       </div>
+      <p id="vol-note" class="small"></p>
     </div>
   </aside>
 </div>
@@ -257,8 +258,7 @@ $('tog3d').onclick=e=>{is3d=!is3d;e.target.textContent=is3d?'2D':'3D';e.target.s
 // --- panel ---
 const fmtDate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 const fdate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-const nMod=modelled.filter(Boolean).length, nPhys=PW.filter(Boolean).length;
-$('pillCount').textContent=`Test year · ${nPhys} works on the physics model, ${nMod-nPhys} overflows on the backup`;
+const nMod=modelled.filter(Boolean).length;
 $('day').max=DATES.length-1;
 $('dayTicks').innerHTML=DATES.map((d,i)=>[d,i]).filter(([d])=>d.slice(8)==='01'&&['01','04','07','10'].includes(d.slice(5,7)))
   .map(([d,i])=>`<span style="left:${(i/(DATES.length-1)*100).toFixed(2)}%">${new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',d.slice(5,7)==='01'||i===0?{month:'short',year:'numeric'}:{month:'short'})}</span>`).join('');
@@ -276,7 +276,7 @@ function paintList(){ let likely=0, obs=0;
     const st=b.querySelector('strong'); st.textContent=v==null?'–':pct(v); st.style.color=c; });
   $('nLikely').textContent=likely; $('nUnlikely').textContent=nMod-likely; $('nObs').textContent=obs; }
 function paintDetail(){
-  const on=sel>=0; $('empty').classList.toggle('hidden',on); $('details').classList.toggle('hidden',!on); if(!on) return;
+  const on=sel>=0; $('empty').classList.toggle('hidden',on); $('details').classList.toggle('hidden',!on); $('side').classList.toggle('picked',on); if(!on) return;
   const s=SITES[sel], pw=PW[sel], w=WI[s.id], v=CH[sel];
   $('site-name').textContent=s.name; $('site-water').textContent=s.water?'into '+s.water:'';
   const st=$('status');
@@ -304,6 +304,7 @@ function paintDetail(){
   else $('explanation').textContent=`With ${R.toFixed(1)} mm instead of the ${fell.toFixed(1)} mm that fell, the statistical backup's chance of a spill goes from ${pct(statChance(sel,false))} to ${pct(v)}. How wet the ground already was stays the same.`; }
 function refresh(){ whatIf(); CH=SITES.map((_,i)=>chance(i)); P=RV.map(pressure); TR=trips(); version++; paintList(); paintDetail(); if(reduce) D.setProps({layers:layers(0)}); }
 function select(i,flyTo){ sel=i; rainOverride=null; DS=i>=0?new Set(SITES[i].downstream):null; refresh();
+  if(i>=0){$('side').scrollTop=0; $('details').scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});}
   if(flyTo&&i>=0){const s=SITES[i];fly({longitude:s.lon+0.01,latitude:s.lat-0.02,zoom:12.2,pitch:is3d?58:0,bearing:viewState.bearing||-15});} }
 function setDay(d){ day=d; rainOverride=null; $('day').value=d; $('dayLabel').textContent=fmtDate(DATES[d]); refresh(); }
 $('day').oninput=e=>setDay(+e.target.value);
