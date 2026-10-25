@@ -122,11 +122,11 @@ const [O,RV,WF,VF]=await Promise.all(['data/outfalls.json','data/rivers.json','d
 // days: the observed test year, then the physics model's 7-day forecast (physics.json) when one was built
 const DATES=VF.dates||O.dates, NOBS=O.dates.length, FC=VF.forecast, SITES=O.sites, WI=WF.sites;
 const isFc=d=>d>=NOBS;
+const $=id=>document.getElementById(id);
 // rain slider runs to the wettest day in the data (any gauge), rounded up to 5 mm
 const RAINMAX=Math.ceil(Math.max(...VF.drivers.rain.flatMap(g=>g.map(d=>d.reduce((a,x)=>a+x,0))))/5)*5;
 $('rain').max=String(RAINMAX);
 $('rainticks').innerHTML=[0,1,2,3,4].map(k=>`<span>${Math.round(RAINMAX*k/4)}${k===0||k===4?' mm':''}</span>`).join('');
-const $=id=>document.getElementById(id);
 let day=FC?FC.start:DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;   // opens on today's forecast
 let sel=-1, heatOn=true, is3d=true, rainOverride=null;   // rainOverride: mm at the selected overflow, this day only
 
