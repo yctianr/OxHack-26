@@ -31,7 +31,13 @@ Layout and controls follow Keira's `UI-first-draft.html`, with the 3D map in pla
 
 ### `river.html`: rivers, swimming and fish (light theme)
 
-A clean 2D map (Esri Light Gray basemap, deck.gl) of the river network and the 61 discharge points, red where spilling that day. Two toggleable heatmaps: E. coli (yellow to dark red) and ammonia (purple, drawn as a core inside the E. coli band when both are on). One day slider runs over the test year and the 7-day forecast, with ‹ › to step a day; it opens on today. Hovering on a river gives E. coli, ammonia and "safe for swimmers / safe for fish" for that 100 m; hovering on a discharge point gives its spill that day. Method and sources: [10-water-quality.md](10-water-quality.md).
+A clean 2D map (Esri Light Gray basemap, deck.gl) of the river network and the 52 sewage works with flow data (the 9 overflows without it are left off), with dotted lines to the river each one empties into. Two toggleable heatmaps colour every river: E. coli (green where safe to swim, amber, then red) and ammonia (green where safe for fish, then purple; drawn as a core inside the E. coli band when both are on). One day slider runs over the test year and the 7-day forecast, with ‹ › to step a day; it opens on today. Hover on a river for E. coli, ammonia and "safe for swimmers / safe for fish"; hover on a discharge point for its spill that day.
+
+Two modes:
+- **Forecast & past:** monitors on past days, the physics forecast on forecast days.
+- **My scenario:** every works is rerun in the browser with the physics model for the chosen day, from its soil, groundwater and storm-tank state that morning. A rainfall slider sets the day's rain everywhere ("As it fell" restores it). Clicking a discharge point opens a card to change its storm-tank volume and treatment capacity, with that day's chance of a spill, spill-hours and volume as built vs with your change; the rivers update. Changes persist across days until reset, so you can step through a wet spell with a bigger tank.
+
+Method and sources: [10-water-quality.md](10-water-quality.md).
 
 ## River glow
 
