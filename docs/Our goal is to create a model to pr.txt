@@ -1,0 +1,30 @@
+Our goal is to create a model to predict the water pollution from storm discharges at sewage discharge points during future storms.
+
+Context:
+Thames Water can legally discharge untreated sewage from sewage discharge points into waterways/ditches during storms as the sewer network is overwhelmed and they need to prevent wastewater backing up into homes. This pollutes the waterways, killing off animals. 
+We reasoned that using predicted rainfall data, we could build a model that predicts how much the rate of overflow volume exceeds the rate that Thames Water can treat sewage at discharge points during future storms. By predicting that, the model can also predict the amount of pollution in the water at future times.
+This would be helpful in informing where waste treating infrastructure improvements should be prioritised and whether or not stricter waste disposal laws are needed.
+
+
+Data:
+We chose 22 discharge points in the wider Oxford area based on Thames Water's storm discharge map: https://www.thameswater.co.uk/edm-map
+
+We cleaned past data of rainfall around those discharge points to fit our model around. Unfortunately, rainfall data is only limited to 4 points within the area of interest so we have to make an assumption that rainfall at discharge points are the same as the rainfall at the nearest data point to them. Additionally, if there were missing points in the rainfall dataset, we replaced those with rainfall data from another location.
+
+We cleaned predicted rainfall data from Meteo.uk, which would be used to test the accuracy of our model 
+
+
+
+From Thames Water databases, we cleaned storm discharge data which would be used to test our model's accuracy.
+Unfortunately, we have no overflow volume data, so that is something that our model will need to be able to predict this and correlate that to rainfall
+
+
+Creating the Model:
+
+
+Testing the Model: 
+
+
+Creating the UI:
+We wanted to make a heat map based on the concentration of pollution in the river. 
+
