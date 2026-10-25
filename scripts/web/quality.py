@@ -28,11 +28,11 @@ PARAMS = dict(
     ecoli_k_winter=0.5,      # per day, first-order die-off, Oct-Mar
     ecoli_k_summer=1.1,      # per day, Apr-Sep
     ammonia_k=0.3,           # per day, nitrification
-    ecoli_bg=300.0,          # cfu/100 mL, river background without spills
+    ecoli_bg=100.0,          # cfu/100 mL, river background without spills
     ammonia_bg=0.04,         # mg/L N, river background
     velocity=0.5,            # m/s, travel speed at the high flows when spills happen
-    swim_ok=500.0, swim_bad=1000.0,       # cfu/100 mL: safe up to swim_ok; unsafe above swim_bad
-    fish_ok=0.6, fish_bad=1.1,            # mg/L N total ammonia: safe up to fish_ok; harmful above fish_bad
+    swim_ok=235.0, swim_bad=235.0,        # cfu/100 mL: dangerous from 235 (one level: no "take care" band)
+    fish_ok=0.5, fish_bad=0.5,            # mg/L N total ammonia: harmful from 0.5
     max_km=40.0, step_m=100.0, min_flow=0.005)
 SOURCES = {
     "ecoli_source": "Passerat et al. 2011, Water Research 45:893 (Seine CSO): 'The CSO contained 1.5 x 10^6 E. coli per 100 mL on average'; range 4.6-7.3 log10 (Wang et al. 2026). https://pubmed.ncbi.nlm.nih.gov/20934197/",
@@ -40,9 +40,9 @@ SOURCES = {
     "ecoli_k": "Servais et al. 2007, HESS 11:1581: 45e-3 per hour at 20 C, temperature dependent; Seine 0.19-0.81 per day. Winter 0.5, summer 1.1 per day. https://hess.copernicus.org/articles/11/1581/2007/",
     "ammonia_k": "Judgement within Pauer & Auer 2009 (nitrification velocity 0.14-0.97 m/day, i.e. ~0.1-1 per day for 1 m depth). https://digitalcommons.mtu.edu/michigantech-p/6309",
     "ammonia_bg": "Bowes et al. 2018, ESSD 10:1637, Table 3: Cherwell 0.031, Thames at Swinford 0.039 mg N/L. https://essd.copernicus.org/articles/10/1637/2018/",
-    "ecoli_bg": "Order of magnitude only: Servais et al. 2007 (100-1000 per 100 mL in small streams); EA samples at Wolvercote Mill Stream reported 300 in June 2022 (news report). No proper median found.",
-    "swim": "Bathing Water Regulations 2013 Schedule 5 (inland, E. coli per 100 mL): Excellent 500, Good 1000 (95th percentile). https://www.legislation.gov.uk/uksi/2013/1675/schedule/5/made",
-    "fish": "WFD (Standards and Classification) Directions (England and Wales) 2015, Sch 3 Table 7, lowland high alkalinity: total ammonia Good 0.6, Moderate 1.1 mg N/L (90th percentile). https://www.legislation.gov.uk/uksi/2015/1623",
+    "ecoli_bg": "Servais et al. 2007: around 100 per 100 mL in streams draining cultivated or wooded land (around 1000 for pasture). https://hess.copernicus.org/articles/11/1581/2007/",
+    "swim": "Set by the team: dangerous from 235 E. coli per 100 mL, the US EPA 1986 single-sample maximum for designated beach areas (Ambient Water Quality Criteria for Bacteria). For comparison, England's inland bathing standards are Excellent 500, Good 1000 (95th percentile).",
+    "fish": "Set by the team: harmful from 0.5 mg N/L total ammonia, between the WFD High (0.3) and Good (0.6) boundaries for lowland high-alkalinity rivers (WFD Standards Directions 2015, Sch 3 Table 7).",
     "velocity": "EA time-of-travel database (Guymer, Warwick): most traces 0.05-0.5 m/s, rising with discharge; spills happen at high flow. https://www2.warwick.ac.uk/fac/sci/eng/research/grouplist/water/events/britcouncildyetracing/2_mixing_in_rivers.pdf",
 }
 P = PARAMS

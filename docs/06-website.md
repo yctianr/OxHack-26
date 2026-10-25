@@ -31,7 +31,9 @@ Layout and controls follow Keira's `UI-first-draft.html`, with the 3D map in pla
 
 ### `river.html`: rivers, swimming and fish (light theme)
 
-A clean 2D map (Esri Light Gray basemap, deck.gl) of the river network and the 52 sewage works with flow data (the 9 overflows without it are left off), with dotted lines to the river each one empties into. Two toggleable heatmaps colour every river: E. coli (green where safe to swim, amber, then red) and ammonia (green where safe for fish, then purple; drawn as a core inside the E. coli band when both are on). One day slider runs over the test year and the 7-day forecast, with ‹ › to step a day; it opens on today. Hover on a river for E. coli, ammonia and "safe for swimmers / safe for fish"; hover on a discharge point for its spill that day.
+A clean 2D map (Esri Light Gray basemap, deck.gl) of the river network and the 52 sewage works with flow data (the 9 overflows without it are left off), with dotted lines to the river each one empties into. Two toggleable heatmaps colour the river within 40 km downstream of a works (the rest, with no works upstream, stays pale blue and reads "not assessed" on hover): E. coli (green where safe to swim, amber, then red) and ammonia (green where safe for fish, then purple; drawn as a core inside the E. coli band when both are on). One day slider runs over the test year and the 7-day forecast, with ‹ › to step a day; it opens on today. Hover on a river for E. coli, ammonia and "safe for swimmers / safe for fish"; hover on a discharge point for its spill that day.
+
+A sidebar counts the works spilling on the chosen day and ranks them by volume (past days: monitor hours × the works' modelled spill rate; forecast: the physics forecast; scenario: your run); clicking one flies the map to it.
 
 Two modes:
 - **Forecast & past:** monitors on past days, the physics forecast on forecast days.

@@ -32,15 +32,15 @@ The river is cut into 17,996 segments of 100 m; 3,928 lie within 40 km downstrea
 | E. coli die-off | 0.5 /day Oct–Mar, 1.1 /day Apr–Sep | [Servais et al. 2007](https://hess.copernicus.org/articles/11/1581/2007/), HESS 11:1581 (temperature dependent; Seine 0.19–0.81 /day) |
 | Ammonia loss | 0.3 /day | **Judgement** within [Pauer & Auer 2009](https://digitalcommons.mtu.edu/michigantech-p/6309) (~0.1–1 /day for 1 m depth) |
 | Background ammonia | 0.04 mg N/L | [Bowes et al. 2018](https://essd.copernicus.org/articles/10/1637/2018/), ESSD 10:1637, Table 3 (Cherwell 0.031, Thames at Swinford 0.039) |
-| Background E. coli | 300 per 100 mL | **Order of magnitude only:** Servais 2007 (100–1,000 in small streams); EA samples at Wolvercote Mill Stream, June 2022 (news report) |
+| Background E. coli | 100 per 100 mL | [Servais et al. 2007](https://hess.copernicus.org/articles/11/1581/2007/): about 100 in streams draining cultivated or wooded land (about 1,000 for pasture) |
 | Travel speed | 0.5 m/s | EA time-of-travel database ([Guymer, Warwick](https://www2.warwick.ac.uk/fac/sci/eng/research/grouplist/water/events/britcouncildyetracing/2_mixing_in_rivers.pdf)): mostly 0.05–0.5 m/s, rising with flow; spills happen at high flow |
 
 ## Advice on hover
 
 | Label | Rule | Basis |
 | --- | --- | --- |
-| Safe for swimmers / Take care / Not safe to swim | E. coli ≤ 500 / ≤ 1,000 / above, per 100 mL | [Bathing Water Regulations 2013](https://www.legislation.gov.uk/uksi/2013/1675/schedule/5/made), inland waters: Excellent 500, Good 1,000 |
-| Safe for fish / Stressful for sensitive fish / Harmful to fish | Total ammonia ≤ 0.6 / ≤ 1.1 / above, mg N/L | [WFD Standards Directions 2015](https://www.legislation.gov.uk/uksi/2015/1623), lowland high-alkalinity rivers (the Cherwell is Type 7): Good 0.6, Moderate 1.1 |
+| Safe for swimmers / Not safe to swim | E. coli below / from 235 per 100 mL | Set by the team: the US EPA 1986 single-sample maximum for designated beaches. England's inland bathing standards are Excellent 500, Good 1,000 (95th percentile) |
+| Safe for fish / Harmful to fish | Total ammonia below / from 0.5 mg N/L | Set by the team, between the [WFD](https://www.legislation.gov.uk/uksi/2015/1623) High (0.3) and Good (0.6) boundaries for lowland high-alkalinity rivers |
 
 ## Limits
 
