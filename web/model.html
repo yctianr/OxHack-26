@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spillcast: the model</title>
+<meta name="description" content="How Spillcast works: a physics water balance of every sewage works around Oxford, its data, and how well it predicts spills on days it never saw.">
+<style>
+:root{--ink:#1f2a30;--mute:#6b7a80;--line:#e3e8ea;--card:#fff;--bg:#eef2f3;--accent:#1f6f8b;--good:#3aa76d;--bad:#c2362f;--grey:#8a979c;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg)}
+main{max-width:1060px;margin:0 auto;padding:28px 16px 60px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.top h1{font-size:22px;font-weight:700;margin:0}.top p{margin:4px 0 0;color:var(--mute);font-size:14px}
+.back{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:500 13px inherit;font-family:inherit;color:var(--ink);text-decoration:none;white-space:nowrap}
+.back:hover{border-color:#c9d3d6}
+h2{font-size:16px;font-weight:650;margin:34px 0 4px}
+.lead{color:var(--mute);font-size:13.5px;margin:0 0 14px;max-width:70ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 4px rgba(20,40,50,.04)}
+.card h3{font-size:13.5px;font-weight:650;margin:0 0 2px}.card .sub{font-size:12px;color:var(--mute);margin:0 0 10px}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.kpi b{display:block;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi span{font-size:12px;color:var(--mute)}
+.chart{position:relative;height:240px}.chart.tall{height:300px}
+svg text{font-family:inherit}
+.steps{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.step{flex:1;min-width:150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;position:relative}
+.step b{display:block;font-size:13px}.step span{font-size:12px;color:var(--mute)}
+.step i{font-style:normal;font-size:11px;font-weight:650;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--mute);font-size:11.5px}
+td.n{text-align:right;white-space:nowrap}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eef2f3;color:var(--mute)}
+.pill.good{background:#e6f4ec;color:#2e8b57}.pill.bad{background:#fbe6e4;color:var(--bad)}
+.eq{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#f6f8f8;border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--mute);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.foot{margin-top:40px;font-size:11.5px;color:var(--mute)}
+.foot a{color:inherit}
+@media(max-width:820px){.g2,.g3,.g4{grid-template-columns:1fr}.top{flex-wrap:wrap}}
+</style></head>
+<body><main>
+<div class="top"><div><h1>How Spillcast works</h1><p>A physics model of every sewage works around Oxford, tested on days it never saw.</p></div>
+  <a class="back" href="river.html">← Back to the map</a></div>
+
+<section class="grid g4" id="kpis"></section>
+
+<h2>The model</h2>
+<p class="lead">Each works is simulated hour by hour as plumbing. Water arrives from homes, roofs and roads, saturated ground and groundwater. The works treats up to its capacity, a storm tank holds the excess, and only what the tank can't hold spills. It is fitted only to the flow each works treated, never to its spill records.</p>
+<div class="card"><svg id="plumb" viewBox="0 0 1000 330" width="100%" role="img" aria-label="Water balance: rain and sewage flow into the works; the storm tank holds the excess; the rest spills"></svg></div>
+
+<h2>From data to map</h2>
+<div class="steps">
+  <div class="step"><i>1 Data</i><b>Rain, river flow, treated flow</b><span>EA gauges every 15 min, Thames Water daily volumes</span></div>
+  <div class="step"><i>2 Fit</i><b>52 works, physics only</b><span>8 physical parameters each, from treated flow</span></div>
+  <div class="step"><i>3 Forecast</i><b>7 days ahead</b><span>51 ECMWF rain scenarios × 4 runs per works</span></div>
+  <div class="step"><i>4 River</i><b>Every 100 m</b><span>Spill × sewage strength, diluted by river flow, decaying downstream</span></div>
+  <div class="step"><i>5 Advice</i><b>Swim? Fish?</b><span>E. coli from 235 per 100 mL, ammonia from 0.5 mg/L</span></div>
+</div>
+
+<h2>Backtest: days the model never saw</h2>
+<p class="lead">Oct 2025 to Oct 2026, scored against Thames Water's spill monitors. The model was fitted on data before October 2025 and never sees a spill record.</p>
+<div class="card"><h3>Works spilling each day</h3><p class="sub">Bars: recorded by monitors. Line: the model's expected number, from the rain that fell.</p>
+  <div class="chart tall"><canvas id="daily"></canvas></div></div>
+<div class="grid g2" style="margin-top:14px">
+  <div class="card"><h3>Skill against simple baselines</h3><p class="sub">Brier skill vs always guessing the average (1 = perfect, 0 = no better). "Same as yesterday" already knows if a works was spilling that morning; the model sees only the weather.</p><div class="chart"><canvas id="skill"></canvas></div></div>
+  <div class="card"><h3>Do the probabilities mean what they say?</h3><p class="sub">When the model says p, how often a spill happened. On the diagonal = honest.</p><div class="chart"><canvas id="cal"></canvas></div></div>
+</div>
+<div class="grid g2" style="margin-top:14px">
+  <div class="card"><h3>Accuracy at each works</h3><p class="sub">How well each works' spill days are ranked (AUC; 0.5 = coin toss, 1 = perfect)</p><div class="chart"><canvas id="auc"></canvas></div></div>
+  <div class="card"><h3>Live test: the 23–24 Oct storm</h3><p class="sub">Scored after the data cut-off of 22 Oct</p>
+    <table><tr><th>Day</th><th class="n">Spilled</th><th class="n">Model expected</th><th class="n">Caught</th><th class="n">False alarms</th></tr>
+      <tr><td>Fri 23 Oct, storm</td><td class="n">16</td><td class="n">16.2</td><td class="n">10 of 16</td><td class="n">5</td></tr>
+      <tr><td>Sat 24 Oct</td><td class="n">3</td><td class="n">12.0</td><td class="n">3 of 3</td><td class="n">8</td></tr></table>
+    <p class="sub" style="margin-top:10px">Right total on the storm day; too slow to drain the day after.</p></div>
+</div>
+
+<h2>Do the fitted numbers mean what they say?</h2>
+<p class="lead">Fitted only to treated flow, the model lands close to independent published figures.</p>
+<div class="card"><svg id="checks" viewBox="0 0 1000 272" width="100%" role="img" aria-label="Model values against published values"></svg></div>
+
+<h2>River quality</h2>
+<p class="lead">On a spill day, sewage from each works mixes into the river and dies off as it travels. Rivers with no works upstream are not assessed.</p>
+<div class="eq">concentration = background + Σ works upstream:  sewage strength × spill rate / (river flow + spill rate) × e<sup>−k × travel time</sup></div>
+<div class="grid g3" style="margin-top:14px">
+  <div class="card"><h3>E. coli in sewage spills</h3><p class="sub">1.5 million per 100 mL (Passerat et al. 2011)</p><b style="font-size:13px">Unsafe to swim from 235</b><p class="sub">per 100 mL (US EPA single-sample limit)</p></div>
+  <div class="card"><h3>Ammonia in sewage spills</h3><p class="sub">4 mg/L, crude sewage diluted by runoff</p><b style="font-size:13px">Harmful to fish from 0.5 mg/L</b><p class="sub">between the WFD High and Good limits</p></div>
+  <div class="card"><h3>Travel and decay</h3><p class="sub">0.5 m/s downstream; E. coli dies off 0.5 per day in winter, 1.1 in summer; ammonia 0.3 per day</p></div>
+</div>
+
+<h2>Data</h2>
+<div class="card"><table>
+  <tr><th>Data</th><th>From</th><th>Used for</th></tr>
+  <tr><td>Rainfall, 10 gauges, every 15 min</td><td>Environment Agency</td><td>Runoff, soil, groundwater</td></tr>
+  <tr><td>River flow (Thames at Farmoor and 9 more)</td><td>Environment Agency</td><td>Groundwater; dilution in the river</td></tr>
+  <tr><td>Treated volume per works, daily</td><td>Thames Water</td><td>What the model is fitted to</td></tr>
+  <tr><td>Spill monitor alerts</td><td>Thames Water</td><td>Scoring only; spills on past days</td></tr>
+  <tr><td>Permitted flow, population</td><td>Oxford Rivers Improvement Campaign</td><td>Starting values and checks</td></tr>
+  <tr><td>Storm tank sizes</td><td>Tender notice, Hammond et al. 2021, Parliament evidence</td><td>Tank size at 5 works</td></tr>
+  <tr><td>Evaporation</td><td>Open-Meteo</td><td>How fast the ground dries</td></tr>
+  <tr><td>Rain forecast, 51 scenarios</td><td>ECMWF via Open-Meteo</td><td>The 7-day forecast</td></tr>
+  <tr><td>River network</td><td>OS Open Rivers</td><td>Routing every 100 m</td></tr>
+</table></div>
+
+<p class="foot">Model estimates, not measurements. Built at OxHack 2026. Full method in the repo's docs folder.</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(async function(){
+'use strict';
+const [ST,PH,O]=await Promise.all(['data/stats.json','data/physics.json','data/outfalls.json'].map(u=>fetch(u).then(r=>r.json())));
+const C={ink:'#1f2a30',mute:'#6b7a80',line:'#e3e8ea',accent:'#1f6f8b',good:'#3aa76d',bad:'#c2362f',grey:'#8a979c',amber:'#f2b134'};
+Chart.defaults.font.family='Inter, system-ui, sans-serif'; Chart.defaults.font.size=11; Chart.defaults.color=C.mute;
+const B=ST.phys.B, A=ST.phys.A, NOBS=O.dates.length;
+
+// ---- headline numbers ----
+const wks=Object.keys(PH.works).length;
+document.getElementById('kpis').innerHTML=[
+  [wks,'sewage works modelled'],[B.rows.wb1_p.auc.toFixed(2),'median accuracy (AUC) on unseen days'],
+  [B.days.toLocaleString('en-GB'),'works-days tested'],['0','spill records used to fit it']]
+  .map(([v,l])=>`<div class="card kpi"><b>${v}</b><span>${l}</span></div>`).join('');
+
+// ---- the plumbing diagram ----
+const svg=document.getElementById('plumb');
+const box=(x,y,w,h,t,s,fill='#fff',stroke=C.line,tc=C.ink)=>`<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="1.3"/>
+  <text x="${x+w/2}" y="${y+h/2-(s?4:-4)}" text-anchor="middle" font-size="13" font-weight="650" fill="${tc}">${t}</text>${s?`<text x="${x+w/2}" y="${y+h/2+13}" text-anchor="middle" font-size="11" fill="${C.mute}">${s}</text>`:''}</g>`;
+const arrow=(d,c=C.grey,dash='')=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="1.6" ${dash?`stroke-dasharray="${dash}"`:''} marker-end="url(#ah)"/>`;
+svg.innerHTML=`<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${C.grey}"/></marker></defs>
+  ${box(20,20,170,52,'Rain','EA gauges','#eaf2f7','#cfe1ea')}${box(215,20,170,52,'Evaporation','Open-Meteo','#eaf2f7','#cfe1ea')}${box(410,20,170,52,'River flow','Thames at Farmoor','#eaf2f7','#cfe1ea')}${box(605,20,170,52,'Homes, business','population','#eaf2f7','#cfe1ea')}
+  ${box(20,120,170,52,'Roofs and roads','drain straight away')}${box(215,120,170,52,'Soil','drains once wet')}${box(410,120,170,52,'Groundwater','leaks into pipes')}${box(605,120,170,52,'Sewage','steady, daily cycle')}
+  ${arrow('M105 72V120')}${arrow('M150 72C150 96 260 96 270 120')}${arrow('M330 120V72')}${arrow('M385 146H410')}${arrow('M495 72V120','#8a979c','4 3')}${arrow('M690 72V120')}
+  ${box(20,212,755,40,'Sewer: everything that reaches the works','',  '#fff',C.line)}
+  ${arrow('M105 172V212')}${arrow('M300 172V212')}${arrow('M495 172V212')}${arrow('M690 172V212')}
+  ${box(820,120,160,52,'Treatment works','up to its capacity')}
+  ${arrow('M775 232H900V172')}
+  ${box(820,20,160,52,'Treated','measured daily','#e6f4ec','#cbe7d6')}
+  ${arrow('M900 120V72')}
+  ${box(605,272,170,46,'Storm tank','holds the excess')}
+  ${box(820,272,160,46,'Spill to river','when the tank is full','#fbe6e4','#f0c4c0',C.bad)}
+  ${arrow('M860 172C860 250 790 250 775 290')}${arrow('M775 295H820')}`;
+
+// ---- backtest: works spilling each day, observed vs expected ----
+const ids=Object.keys(PH.works), idx={}; O.sites.forEach((s,i)=>idx[s.id]=i);
+const obsN=[],expN=[];
+for(let d=0;d<NOBS;d++){ let o=0,e=0,n=0; for(const id of ids){ const s=O.sites[idx[id]], v=s.obs?s.obs[d]:null; if(v==null) continue; n++; o+=v>0; e+=PH.works[id].p[d]; } obsN.push(o); expN.push(+e.toFixed(1)); }
+const labels=O.dates;
+new Chart(document.getElementById('daily'),{data:{labels,datasets:[
+  {type:'bar',label:'Spilled (monitors)',data:obsN,backgroundColor:'rgba(138,151,156,.45)',barPercentage:1,categoryPercentage:1,order:2},
+  {type:'line',label:'Model expected',data:expN,borderColor:C.bad,borderWidth:1.6,pointRadius:0,tension:.2,order:1}]},
+  options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'top',align:'end',labels:{boxWidth:10,boxHeight:10}},tooltip:{callbacks:{title:it=>new Date(it[0].label+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}}},
+    scales:{x:{grid:{display:false},ticks:{autoSkip:false,maxRotation:0,callback:(v,i)=>labels[i].slice(8)==='01'?new Date(labels[i]+'T12:00:00Z').toLocaleDateString('en-GB',{month:'short'}):''}},
+      y:{beginAtZero:true,grid:{color:C.line},title:{display:true,text:'works spilling'}}}}});
+
+// ---- skill against baselines ----
+const rows=[['Physics model','wb1_p',C.bad],['Same as yesterday','persistence',C.grey],['Always the average','clim','#c9d1d4']];
+new Chart(document.getElementById('skill'),{type:'bar',data:{labels:['Oct 2024 – Sep 2025','Oct 2025 – Oct 2026'],
+  datasets:rows.map(([l,k,c])=>({label:l,data:[A.rows[k].skill,B.rows[k].skill],backgroundColor:c,borderRadius:4}))},
+  options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',align:'end',labels:{boxWidth:10,boxHeight:10}}},
+    scales:{x:{grid:{display:false}},y:{min:0,max:1,grid:{color:C.line}}}}});
+// note: "same as yesterday" knows whether a works was already spilling that morning; the physics model is given only the weather
+
+// ---- reliability diagram ----
+const cal=B.cal.filter(c=>c[2]>=30);
+new Chart(document.getElementById('cal'),{type:'scatter',data:{datasets:[
+  {label:'Physics model',data:cal.map(c=>({x:c[0],y:c[1],n:c[2]})),backgroundColor:C.bad,borderColor:C.bad,showLine:true,borderWidth:1.6,pointRadius:cal.map(c=>3+Math.log10(c[2])*1.4)},
+  {label:'Perfectly honest',data:[{x:0,y:0},{x:1,y:1}],showLine:true,borderColor:'#c9d1d4',borderDash:[5,4],pointRadius:0,borderWidth:1.2}]},
+  options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',align:'end',labels:{boxWidth:10,boxHeight:10}},
+    tooltip:{callbacks:{label:c=>c.raw.n?`said ${Math.round(c.raw.x*100)}%, happened ${Math.round(c.raw.y*100)}% (${c.raw.n.toLocaleString('en-GB')} days)`:''}}},
+    scales:{x:{min:0,max:1,grid:{color:C.line},title:{display:true,text:'model said'},ticks:{callback:v=>v*100+'%'}},
+      y:{min:0,max:1,grid:{color:C.line},title:{display:true,text:'spills happened'},ticks:{callback:v=>v*100+'%'}}}}});
+
+// ---- per-works AUC (computed here from the published daily chances and monitor records) ----
+function auc(p,y){ const pos=[],neg=[]; p.forEach((v,i)=>(y[i]?pos:neg).push(v)); if(pos.length<5||neg.length<5) return null;
+  const all=p.map((v,i)=>[v,y[i]]).sort((a,b)=>a[0]-b[0]); let r=0,rank=1,sum=0;
+  for(let i=0;i<all.length;){ let j=i; while(j+1<all.length&&all[j+1][0]===all[i][0]) j++; const avg=(i+j)/2+1; for(let k=i;k<=j;k++) if(all[k][1]) sum+=avg; i=j+1; }
+  return (sum-pos.length*(pos.length+1)/2)/(pos.length*neg.length); }
+const A2=[];
+for(const id of ids){ const s=O.sites[idx[id]]; if(!s.obs) continue; const p=[],y=[];
+  for(let d=0;d<NOBS;d++){ if(s.obs[d]==null) continue; p.push(PH.works[id].p[d]); y.push(s.obs[d]>0?1:0); }
+  const a=auc(p,y); if(a!=null) A2.push({n:s.name.replace(' STW',''),a}); }
+A2.sort((a,b)=>b.a-a.a);
+new Chart(document.getElementById('auc'),{type:'bar',data:{labels:A2.map(r=>r.n),datasets:[{data:A2.map(r=>r.a),
+  backgroundColor:A2.map(r=>r.a>=0.9?C.good:r.a>=0.75?C.amber:C.bad),borderRadius:2,barPercentage:.9,categoryPercentage:1}]},
+  options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'AUC '+c.raw.toFixed(2)}}},
+    scales:{x:{display:false},y:{min:0.5,max:1,grid:{color:C.line}}}}});
+
+// ---- fitted vs published: dot plot of ratios (1 = matches) ----
+const checks=[['Sewage per person','model vs population-based figure',1.17],['Treatment capacity','model vs permitted flow',1.07],['Peak groundwater leak','model vs Thames Water allowance',1.07],
+  ['Storm tank, Witney','2-hour rule vs real tank',2067/2201],['Storm tank, Church Hanborough','2-hour rule vs real tank',422/359],['Storm tank, Carterton','2-hour rule vs real tank',828/900]];
+const cs=document.getElementById('checks'), X=r=>520+(r-1)*700;   // ratio 0.75..1.25 -> x
+cs.innerHTML=`<rect x="${X(0.8)}" y="10" width="${X(1.2)-X(0.8)}" height="${checks.length*36+6}" fill="#e6f4ec" rx="6"/>
+  <line x1="${X(1)}" x2="${X(1)}" y1="6" y2="${checks.length*36+20}" stroke="${C.good}" stroke-width="1.5"/>
+  <text x="${X(1)}" y="${checks.length*36+38}" text-anchor="middle" font-size="11" fill="${C.mute}">exact match</text>
+  <text x="${X(0.8)}" y="${checks.length*36+38}" text-anchor="middle" font-size="11" fill="${C.mute}">−20%</text>
+  <text x="${X(1.2)}" y="${checks.length*36+38}" text-anchor="middle" font-size="11" fill="${C.mute}">+20%</text>`+
+  checks.map(([a,b,r],k)=>{ const y=30+k*36; return `<text x="20" y="${y}" font-size="12.5" font-weight="600" fill="${C.ink}">${a}</text><text x="20" y="${y+14}" font-size="11" fill="${C.mute}">${b}</text>
+    <line x1="${X(1)}" x2="${X(r)}" y1="${y+2}" y2="${y+2}" stroke="#b7c2c6" stroke-width="2"/><circle cx="${X(r)}" cy="${y+2}" r="6.5" fill="${C.accent}" stroke="#fff" stroke-width="2"/>
+    <text x="${X(r)+(r>=1?12:-12)}" y="${y+6}" font-size="11.5" text-anchor="${r>=1?'start':'end'}" fill="${C.ink}">${r>=1?'+':''}${Math.round((r-1)*100)}%</text>`; }).join('');
+})().catch(e=>{ document.querySelector('main').insertAdjacentHTML('afterbegin',`<p style="color:#c2362f">Could not load: ${e.message}</p>`); console.error(e); });
+</script>
+</body></html>

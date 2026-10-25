@@ -51,6 +51,8 @@
 .attrib{position:absolute;right:8px;bottom:4px;font-size:10px;color:var(--mute);background:rgba(255,255,255,.7);padding:1px 5px;border-radius:4px}
 .attrib a{color:inherit}
 [hidden]{display:none!important}
+.modelbtn{right:16px;bottom:30px;padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink);text-decoration:none;border-radius:999px}
+.modelbtn:hover{border-color:#c9d3d6}
 .side{left:16px;top:122px;width:290px;max-height:calc(100% - 138px);display:flex;flex-direction:column;padding:12px 0 6px}
 .side .head{padding:0 14px 8px;border-bottom:1px solid var(--line)}
 .side .count{font-size:14px;font-weight:650}.side .count b{color:var(--bad)}
@@ -124,6 +126,7 @@
   <div class="foot"><span class="sub" id="cnote"></span><button class="link" id="creset">Reset</button></div>
 </div>
 <div class="tip" id="tip"></div>
+<a class="panel modelbtn" href="model.html">How the model works →</a>
 <div class="attrib">Model estimates, not measurements. Map © Esri, HERE, Garmin, <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>. Rivers © Crown copyright.</div>
 
 <script src="https://cdn.jsdelivr.net/npm/deck.gl@9.4.0/dist.min.js"></script>
