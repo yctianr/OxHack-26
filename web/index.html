@@ -498,7 +498,7 @@ document.getElementById('copy').onclick=()=>{
 const HELP={obs:'Spill monitors: did each overflow spill that day? This is the truth the models are scored against.',
   phys:'Physics water balance of each treatment works, given the rain that fell: sewage, runoff and groundwater in; treatment up to capacity; a storm tank; a spill only once the tank is full. Fitted only to treated flow, never to spill records. Overflows with no treated-flow data show the statistical backup.',
   exp:'Statistical backup: a per-overflow logistic model of rain and wet ground, given the rain that fell. Fitted to spill records.',
-  fc:'Statistical forecast: 'Standing at midnight with no rain forecast: today\'s chance of a spill, from wet ground, rain so far and whether it is already spilling.'};
+  fc:'Statistical forecast: standing at midnight with no rain forecast: today\'s chance of a spill, from wet ground, rain so far and whether it is already spilling.'};
 function kpis(){
   let n=0,obs=0;SITES.forEach(s=>{if(!s.pe)return;n++;obs+=s.obs[day]||0;});
   document.getElementById('k1').textContent=`${obs}/${n}`;document.getElementById('k1l').textContent='overflows spilled (monitors)';

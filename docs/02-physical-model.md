@@ -98,7 +98,7 @@ Same held-out works and days for every row (fold B: Oct 2025 – 22 Oct 2026; fo
 | Same as yesterday | 0.032 (0.036) | 0.72 (0.68) | 0.90 (0.86) |
 
 - Physics ranks spill days almost as well as a model fitted to spill records, without ever seeing one. That is the strongest evidence the plumbing is right.
-- **Spill-hours are undercounted by 28%** (median per works-year; typical error 58%). Daily treated flow stops rising at capacity, so the model never sees how far inflow overshot, and that overshoot sets how long a spill lasts.
+- **Spill-hours are undercounted by 30%** (median per works-year; typical error 58%). Daily treated flow stops rising at capacity, so the model never sees how far inflow overshot, and that overshoot sets how long a spill lasts.
 - Errors run both ways per works: Witney's spill-hours are about 2.6× too high, Oxford's about 2.7× too low.
 
 ## Spill volume
