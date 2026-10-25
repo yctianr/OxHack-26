@@ -51,3 +51,16 @@
 - [Thames21 / ORIC capacity study](https://www.thames21.org.uk/2025/07/new-research-reveals-over-half-of-thames-waters-sewage-works-struggling-to-meet-demand/)
 - [BGS Geology 50k WMS](https://www.bgs.ac.uk/technologies/web-map-services-wms/web-map-services-geology-50k/): licence unclear
 - [Stream National Storm Overflow Hub](https://www.streamwaterdata.co.uk/pages/the-national-storm-overflow-hub)
+
+
+
+## Population data 
+  Sources:
+  - Wikipedia – List of civil parishes in Oxfordshire (2011 census) (https://en.wikipedia.org/wiki/List_of_civil_parishes_in_Oxfordshire)
+  - ONS – Cherwell census population change (https://www.ons.gov.uk/visualisations/censuspopulationchange/E07000177/)
+  - ONS – Vale of White Horse census area changes (https://cy.ons.gov.uk/visualisations/censusareachanges/E07000180)
+  - ONS – West Oxfordshire (https://www.ons.gov.uk/explore-local-statistics/areas/E07000181)
+  - ONS – South Oxfordshire (https://www.ons.gov.uk/explore-local-statistics/areas/E07000179-south-oxfordshire)
+  - Thames Water – Oxford STW report (https://www.thameswater.co.uk/media-library/l52df1pb/oxford-stw-report.pdf)
+  - planningsignal.co.uk – Standlake (https://www.planningsignal.co.uk/towns/standlake)
+
