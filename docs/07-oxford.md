@@ -1,10 +1,10 @@
-# 03 · Oxford specifics
+# 07 · Oxford context
 
 ## Thames Water Oxford GISMP (verified in the PDF)
 
 [Oxford Groundwater Impacted System Management Plan](https://www.thameswater.co.uk/media-library/home/about-us/regulation/drainage-reports/groundwater-infiltration-management-plans/oxford-groundwater-impacted-system-management-plan.pdf), 2021 with 2024 and 2025 addenda.
 
-- **Scale:** Oxford STW serves a **PE of 235,046** through a mostly separate foul network of about **1,485 km**.
+- **Scale:** Oxford and 21 other sites' STW serves a **PE of 356,000 people** through a mostly separate foul network of about **1,485 km**.
 - **Geology:** the catchment is on Oxford Clay / West Walton Formation and the Beckley Sand Member, "**not designated principal aquifers**".
 - **Groundwater indicator sites** chosen by Thames Water: **Cherwell at Botanic Gardens, Cherwell at Kings Mill, Thames at Iffley Lock, Thames at Osney Lock.**
   - Our 24 Oct check: the Thames lock headwater gauges are held within about ±0.15 m, so prefer the Cherwell gauges and river flow.

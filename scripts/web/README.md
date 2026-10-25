@@ -16,9 +16,12 @@ Only needed after the models or data change. It needs the full `data/` folder (s
     python scripts/web/rivers.py      # OS Open Rivers links in the map box -> data/interim/web_links.pkl
     python scripts/web/terrain.py     # Terrarium tiles (AWS) + EA LIDAR 20 m blend -> web/data/elevation.png
     python scripts/web/texture.py     # hillshade texture -> web/data/terrain.jpg
-    python scripts/web/data.py        # outfalls.json (sites, daily Explain/Forecast/observed, downstream links, flow paths) + rivers.json
-    python scripts/web/build_stats.py # stats.json (scores, calibration)
-    python scripts/web/watchlist.py   # watchlist/data.json: the regulator watchlist (run scripts/model/8, 9, 10 first)
+    python scripts/web/data.py        # outfalls.json (sites, statistical chances, monitor results, downstream links, flow paths) + rivers.json
+    python scripts/web/physics.py     # physics.json: physics model per works, states and drivers for the in-browser rerun, glow scale (after 9_wb_fit.py, data.py)
+    python scripts/web/whatif.py      # whatif.json: statistical backup's rain response (after data.py)
+    python scripts/web/build_stats.py # stats.json: both models scored on the same held-out days (after 5 and 9)
+    python scripts/web/watchlist.py   # watchlist/data.json: the regulator watchlist (after scripts/model/8, 9, 10)
 
-River glow in the daily view is a relative index, not a measured % sewage. Watchlist leads are reasons to look,
-not findings of a breach; the method and thresholds are at the top of `watchlist.py` and on the page.
+The river glow is the physics model's spill volume per km of river upstream: a relative index, not water quality.
+Watchlist leads are reasons to look, not findings of a breach; the method and thresholds are at the top of
+`watchlist.py` and on the page. Pages and data files: docs/06-website.md.

@@ -1,0 +1,6 @@
+permit,works,tank_m3,status,source,quote,cite
+TEMP.2827,Oxford,6831,"current, Aug-Oct 2024 (upgrade to 18,167 m3 tendered)",https://www.find-tender.service.gov.uk/Notice/031739-2024,"Increase in the storm tank capacity from 6,831m3 to 18,167m3.","Thames Water tender, Oct 2024"
+CATM.3134,Witney,2201,"actual, data 2009-2020, before the 2026 upgrade (permit 1,728 m3)",https://doi.org/10.1038/s41545-021-00108-3,"Table 1, WWTP2 (identified by its 240 l/s FFT): Storm tank size (m3) Permit 1728 Actual 2201",Hammond et al. 2021
+CSSC.5783,Church Hanborough,359,"actual, data 2009-2020 (permit 364 m3)",https://doi.org/10.1038/s41545-021-00108-3,"Table 1, WWTP1 (identified by its 50.52 l/s FFT): Storm tank size (m3) Permit 364 Actual 359",Hammond et al. 2021
+CATM.3521,Carterton,900,"actual, Feb 2021",https://committees.parliament.uk/writtenevidence/22257/html/,"Table 3, Actual tank volume: Carterton 900","Parliament evidence, Feb 2021"
+TEMP.2373,Bampton,173,"actual, Feb 2021",https://committees.parliament.uk/writtenevidence/22257/html/,"Table 3, Actual tank volume: Bampton 173","Parliament evidence, Feb 2021"

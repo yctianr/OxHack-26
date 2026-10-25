@@ -186,7 +186,7 @@ td.me{color:var(--sewage)}
       <section>
         <p class="eyebrow">How a lead is found</p>
         <p class="note"><b>Spilling below the permit.</b> A works must keep treating its flow to full treatment (FFT) while it spills; compliance is judged as 95% of flow readings above 92% of FFT. On a day it spilled for 20+ hours, treatment should have run at FFT all day. We flag those days when daily treated flow was under 80% of FFT, a margin for outlet metering and daily averaging.</p>
-        <p class="note"><b>Spills the weather doesn't explain.</b> Oct 2024 to Oct 2026: days the monitor recorded 1+ hour of spilling while two independent models gave under 5% chance from the rain and ground wetness (a statistical model of each overflow, and a water balance of each works fitted to its treated flow).</p>
+        <p class="note"><b>Spills the weather doesn't explain.</b> Oct 2024 to Oct 2026: days the monitor recorded 1+ hour of spilling while two independent models gave under 5% chance from the rain and ground wetness (a statistical model of each overflow, and a physical water balance of each works fitted only to its treated flow, which spills only once the works is at full capacity and never sees a spill record).</p>
         <p class="note"><b>A lead is a reason to look, not evidence of a breach.</b> Daily volumes are measured at the outlet while permits apply at the inlet; the operator's 15-minute flow (MON4) and overflow (MON3) records settle it. Permitted flows come from the Oxford Rivers Improvement Campaign's capacity sheet. Ofwat found capacity and operational issues at over two-thirds of Thames Water works with FFT permits, and <a href="https://www.nature.com/articles/s41545-021-00108-3" target="_blank" rel="noopener">Hammond et al. 2021</a> found a Thames Water works spilling well below its permitted flow.</p>
       </section>
     </div>
@@ -198,8 +198,9 @@ td.me{color:var(--sewage)}
         <p class="date" id="dateBig"></p>
         <div style="margin-top:10px" class="seg" role="group" aria-label="What the map shows">
           <button id="m-obs" aria-pressed="false">What happened</button>
-          <button id="m-exp" aria-pressed="false">Explain</button>
-          <button id="m-fc" aria-pressed="true">Forecast</button>
+          <button id="m-phys" aria-pressed="true">Physics model</button>
+          <button id="m-exp" aria-pressed="false">Statistical backup</button>
+          <button id="m-fc" aria-pressed="false">Statistical forecast</button>
         </div>
         <p class="modehelp" id="modehelp"></p>
       </section>
@@ -224,7 +225,7 @@ td.me{color:var(--sewage)}
       </section>
 
       <section>
-        <p class="eyebrow">How good is the forecast?</p>
+        <p class="eyebrow">How good are the models?</p>
         <table id="scores"></table>
         <p class="note" id="scoreNote"></p>
         <div class="chartbox" style="height:170px"><canvas id="calChart" aria-label="Calibration chart"></canvas></div>
@@ -232,12 +233,12 @@ td.me{color:var(--sewage)}
 
       <section>
         <p class="eyebrow">How to read this</p>
-        <p class="note">Overflows release untreated sewage into rivers when sewers are overloaded. The model is a per-overflow "bathtub": recent rain plus how wet the catchment is (Thames flow at Farmoor). <b>Explain</b> uses the rain that actually fell; <b>Forecast</b> stands at midnight with no rain forecast. Scores are on a test year the model never saw.</p>
-        <p class="note">River glow is a relative index: each overflow's spill chance, scaled by the size of its works (treated flow), summed downstream and divided by the river length upstream as a stand-in for dilution. It is a model estimate, not a measurement. Sewage spills indicate risk; they do not confirm water quality.</p>
+        <p class="note">Overflows release untreated sewage into rivers when sewers are overloaded. <b>Physics model</b> (main): a water balance of each treatment works, hour by hour, fitted only to its daily treated flow. <b>Statistical backup</b>: a per-overflow logistic "bathtub" of rain and wet ground, fitted to spill records; it covers overflows with no treated-flow data and gives the <b>forecast</b>, which stands at midnight with no rain forecast. Scores are on a test year neither model saw.</p>
+        <p class="note">River glow shows spilled sewage: each treatment works' daily spill volume from a physics water balance (fitted only to its treated flow; it spills only once the works is at capacity and its storm tank is full), summed downstream and divided by the river length upstream as a stand-in for dilution. Network and pumping-station overflows have no treated-flow data and add nothing. It is a model estimate, not a measurement, and it does not confirm water quality.</p>
       </section>
     </div>
 
-    <p class="note">Data: Thames Water EDM alerts, treated-flow files and 2025 EDM annual return; Environment Agency rain and flow gauges and LIDAR; Open-Meteo evaporation; OS Open Rivers (contains OS data © Crown copyright); terrain tiles from Mapzen/AWS. Built at OxHack 2026. Not affiliated with Thames Water, Ofwat or the Environment Agency.</p>
+    <p class="note">Data: Thames Water EDM alerts, treated-flow files and 2025 EDM annual return; Environment Agency rain and flow gauges and LIDAR; Open-Meteo evaporation; OS Open Rivers (contains OS data © Crown copyright); terrain tiles from Mapzen/AWS. Built at OxHack 2026. Not affiliated with Thames Water, Ofwat or the Environment Agency. <a href="scenario.html" style="color:var(--river)">Try rain scenarios →</a></p>
   </aside>
 </div>
 
@@ -248,19 +249,22 @@ td.me{color:var(--sewage)}
 const BOUNDS=[-1.6700466447550568,51.49514987630958,-0.8215746622899808,52.00396542166687];
 const EX=3;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const [O,RV,ST,WD]=await Promise.all(['data/outfalls.json','data/rivers.json','data/stats.json','watchlist/data.json'].map(u=>fetch(u).then(r=>r.json())));
+const [O,RV,ST,WD,VF]=await Promise.all(['data/outfalls.json','data/rivers.json','data/stats.json','watchlist/data.json','data/physics.json'].map(u=>fetch(u).then(r=>r.json())));
 const DATES=O.dates, SITES=O.sites;
 const WM=WD.meta, WL={}; WD.works.forEach(w=>WL[w.id]=w);
 const SI={}; SITES.forEach((s,i)=>SI[s.id]=i);
 let day=DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;
-let tab='inspect', mode='fc', is3d=true, playing=false;
+let tab='inspect', mode='phys', is3d=true, playing=false;
 let sel=SI[WD.works[0].id], wlFilter='leads', wfYear='all';
 
 // --- values ---
 const LVW={strong:1,moderate:0.55,low:0,insufficient:0};
 const LVC={strong:[255,93,74],moderate:[240,163,58],low:[128,146,146],insufficient:[90,104,104]};
 const LVL={strong:'Strong lead',moderate:'Moderate lead',low:'Low',insufficient:'Not enough data'};
-function val(s,d){ if(!s.pe) return null; const a=mode==='obs'?s.obs:mode==='exp'?s.pe:s.pf; return a[d]; }
+// physics water balance is the main model; where a site has no treated-flow data the statistical model stands in
+function val(s,d){ if(mode==='phys'){const w=VF.works[s.id]; if(w) return w.p[d]; return s.pe?s.pe[d]:null;}
+  if(!s.pe) return null; const a=mode==='obs'?s.obs:mode==='exp'?s.pe:s.pf; return a[d]; }
+const backup=s=>mode==='phys'&&!VF.works[s.id]&&!!s.pe;
 const W=SITES.map(s=>s.type==='works'?(s.size?s.size/1000:0.3):0.15);
 const ref=RV.map(r=>r.u.length?r.u.reduce((a,i)=>a+W[i],0)/Math.max(r.L,2):0);
 const pos=ref.filter(x=>x>0).sort((a,b)=>a-b); const K=pos[Math.floor(pos.length*0.35)]||1; const TMAX=Math.log10(1+pos[pos.length-1]/K);
@@ -268,7 +272,11 @@ function pressure(r,d){
   if(tab==='inspect'){ // where sewage from leads goes; the selected works' route at full strength
     if(DS&&DS.has(r.k)) return 1;
     let m=0; for(const i of r.u){const w=WL[SITES[i].id]; if(w) m=Math.max(m,LVW[w.level]*0.42);} return m; }
-  if(!r.u.length) return 0; let s=0; for(const i of r.u){const v=val(SITES[i],d); if(v) s+=W[i]*v;} return Math.min(1,Math.log10(1+s/Math.max(r.L,2)/K)/TMAX); }
+  const s=upVol(r,d); if(!s) return 0; const t=Math.min(1,Math.log10(1+s/Math.max(r.L,2)/VK)/VMAX); return t<0.03?0:t; }
+// physics-model spill volume (m3) from the works upstream of a river link on day d; glow = that per km of river upstream
+const VOL=SITES.map(s=>VF.works[s.id]||null), VK=VF.scale.K, VMAX=Math.log10(1+VF.scale.S99/VK);
+function upVol(r,d){ let s=0; for(const i of r.u){const v=VOL[i]&&VOL[i].v[d]; if(v) s+=v;} return s; }
+const m3=v=>v==null?'–':v===0?'0':v<10?'under 10':(v<1000?Math.round(v/10)*10:Math.round(v/100)*100).toLocaleString('en-GB');
 function ramp(t,a){ // teal -> amber -> coral
   const c=t<.5?[60+(240-60)*t*2,142+(163-142)*t*2,166+(58-166)*t*2]:[240+(255-240)*(t-.5)*2,163+(93-163)*(t-.5)*2,58+(74-58)*(t-.5)*2];
   return [c[0],c[1],c[2],a]; }
@@ -350,11 +358,12 @@ function tooltip({object,layer}){
     if(tab==='inspect'){const w=WL[object.id];
       const lab=w?`${LVL[w.level]}${w.fft_ls&&w.allday_days?` · ${w.well_below_days}/${w.allday_days} all-day spills under 80% of permit`:''}${w.unexplained_days?` · ${w.unexplained_days} unexplained spill days`:''}`:'Network overflow: no treated-flow data, not screened';
       return {html:`<div class="tip"><b>${object.name}</b><br>${object.water?'into '+object.water+'<br>':''}${lab}</div>`,style:TIPSTYLE};}
-    const v=val(object,day);const lab=mode==='obs'?(v==null?'no data':v?'spilled':'no spill'):(v==null?'not modelled':Math.round(v*100)+'% chance');
-    return {html:`<div class="tip"><b>${object.name}</b><br>${typeLabel(object.type)}${object.water?' → '+object.water:''}<br>${lab}</div>`,style:TIPSTYLE};}
+    const v=val(object,day);const lab=mode==='obs'?(v==null?'no data':v?'spilled':'no spill'):(v==null?'not modelled':Math.round(v*100)+'% chance'+(backup(object)?' (statistical backup)':''));
+    const vl=VOL[SITES.indexOf(object)]?`<br>physics model: ${m3(VOL[SITES.indexOf(object)].v[day])} m³ spilled`:'';
+    return {html:`<div class="tip"><b>${object.name}</b><br>${typeLabel(object.type)}${object.water?' → '+object.water:''}<br>${lab}${vl}</div>`,style:TIPSTYLE};}
   if(layer.id==='core'){const t=P[object.k];
     if(tab==='inspect') return {html:`<div class="tip"><b>${object.n||'Unnamed watercourse'}</b><br>${object.u.length} overflow${object.u.length>1?'s':''} upstream${DS&&DS.has(object.k)?`<br>downstream of ${SITES[sel].name}`:''}</div>`,style:TIPSTYLE};
-    return {html:`<div class="tip"><b>${object.n||'Unnamed watercourse'}</b><br>${object.u.length} overflow${object.u.length>1?'s':''} upstream<br>pressure ${(t*100).toFixed(0)} / 100</div>`,style:TIPSTYLE};}
+    return {html:`<div class="tip"><b>${object.n||'Unnamed watercourse'}</b><br>${object.u.length} overflow${object.u.length>1?'s':''} upstream<br>${m3(upVol(object,day))} m³ spilled upstream that day (physics model)</div>`,style:TIPSTYLE};}
   return null;
 }
 const D=new Deck({parent:document.getElementById('map'),views:new MapView({repeat:false,farZMultiplier:2}),initialViewState:viewState,controller:{touchRotate:true,dragRotate:true},
@@ -383,7 +392,7 @@ const legendHTML={
   inspect:`<div><b style="color:var(--ink);font-weight:500">Sewage works screened for inspection</b></div>
     <div class="keys"><span><i class="dot" style="background:#ff5d4a"></i>strong lead</span><span><i class="dot" style="background:#f0a33a"></i>moderate</span><span><i class="dot" style="background:#809292"></i>low</span><span><i class="dot" style="background:#465456"></i>not screened</span></div>
     <div>Glow: rivers downstream of leads. The selected works' route to the Thames glows brightest; particles trace where its spills go. Height ×3.</div>`,
-  day:`<div><b style="color:var(--ink);font-weight:500">River glow</b> · relative sewage pressure</div><div class="ramp"></div><div class="ends"><span>trace</span><span>heavy</span></div>
+  day:`<div><b style="color:var(--ink);font-weight:500">River glow</b> · spilled sewage from works upstream, per km of river (physics model)</div><div class="ramp"></div><div class="ends"><span>trace</span><span>heavy</span></div>
     <div>Dots: overflows, coloured by spill chance that day. Particles show where spilled sewage travels. Height ×3.</div>`};
 const T=WM.totals;
 document.getElementById('wlKpis').innerHTML=[[T.strong,'strong leads'],[T.moderate,'moderate leads'],[T.well_below_days,'all-day spill days under 80% of permitted flow'],[T.unexplained_days,'spill days the weather doesn\'t explain (2024–26)']]
@@ -447,7 +456,9 @@ function renderWlFile(){
   document.getElementById('wfRoute').innerHTML=`Spills enter <b>${esc(w.water||'the river')}</b>${r.length?' then '+r.map(n=>`<b>${esc(n)}</b>`).join(' → '):''}.`;
   const facts=[['Permitted flow (FFT)',w.fft_ls?fmt(w.fft_ls)+' L/s':'not published'],['Population equivalent',fmt(w.population)],
     ['Spill-hours 2023 / 24 / 25',['2023','2024','2025'].map(y=>fmt(w.spill_hours[y])).join(' / ')],['Asset',clean(w.asset)],
-    ['Thames Water: reason for high spilling',clean(w.tw_reason)],['Thames Water: investigation',clean(w.tw_investigation)]];
+    ['Thames Water: reason for high spilling',clean(w.tw_reason)],['Thames Water: investigation',clean(w.tw_investigation)],
+    ['Estimated spill volume, Oct 2025 – Oct 2026 (physics model)',VF.works[w.id]?m3(VF.works[w.id].v.reduce((a,x)=>a+(x||0),0))+' m³':'–'],
+    ['Storm tank',VF.works[w.id]?`${VF.works[w.id].tank_m3.toLocaleString('en-GB')} m³ (${VF.works[w.id].tank_src})`:'–']];
   document.getElementById('wfFacts').innerHTML=facts.map(([k,v])=>`<div><span>${k}</span><b>${esc(v||'–')}</b></div>`).join('');
   const b=belowDays(w).slice(0,10), u=w.unexplained_dates.slice(0,10);
   document.getElementById('wfDates').innerHTML=(b.length?`<h3>Lowest treatment while spilling all day</h3><ul class="dates">${b.map(x=>`<li>${fdate(x.d)} <span>${x.pct}% · ${x.h} h</span></li>`).join('')}</ul>`:'')+
@@ -484,14 +495,15 @@ document.getElementById('copy').onclick=()=>{
   try{navigator.clipboard.writeText(t).then(()=>{st.textContent='Copied case summary.';},fallback);}catch(e){fallback();} };
 
 // ===================== Spills by day tab =====================
-const HELP={obs:'Spill monitors: did each overflow spill that day? This is the truth the model is scored against.',
-  exp:'Given the rain that actually fell, how likely was a spill? Used for what-ifs and finding spills the weather does not explain.',
-  fc:'Standing at midnight with no rain forecast: today\'s chance of a spill, from wet ground, rain so far and whether it is already spilling.'};
+const HELP={obs:'Spill monitors: did each overflow spill that day? This is the truth the models are scored against.',
+  phys:'Physics water balance of each treatment works, given the rain that fell: sewage, runoff and groundwater in; treatment up to capacity; a storm tank; a spill only once the tank is full. Fitted only to treated flow, never to spill records. Overflows with no treated-flow data show the statistical backup.',
+  exp:'Statistical backup: a per-overflow logistic model of rain and wet ground, given the rain that fell. Fitted to spill records.',
+  fc:'Statistical forecast: standing at midnight with no rain forecast: today\'s chance of a spill, from wet ground, rain so far and whether it is already spilling.'};
 function kpis(){
   let n=0,obs=0;SITES.forEach(s=>{if(!s.pe)return;n++;obs+=s.obs[day]||0;});
   document.getElementById('k1').textContent=`${obs}/${n}`;document.getElementById('k1l').textContent='overflows spilled (monitors)';
   if(mode==='obs'){let h=0;SITES.forEach(s=>{if(s.hours)h+=s.hours[day]||0});document.getElementById('k2').textContent=Math.round(h);document.getElementById('k2l').textContent='spill-hours that day';}
-  else{let e=0;SITES.forEach(s=>{if(s.pe)e+=(mode==='exp'?s.pe:s.pf)[day]||0});document.getElementById('k2').textContent=e.toFixed(1);document.getElementById('k2l').textContent=mode==='exp'?'expected (Explain)':'expected (Forecast)';}
+  else{let e=0;SITES.forEach(s=>{if(s.pe)e+=val(s,day)||0});document.getElementById('k2').textContent=e.toFixed(1);document.getElementById('k2l').textContent={phys:'expected (physics, backup where needed)',exp:'expected (statistical)',fc:'expected (statistical forecast)'}[mode];}
 }
 function rank(){
   const rows=SITES.map((s,i)=>({s,i,v:val(s,day)})).filter(r=>r.v!=null).sort((a,b)=>b.v-a.v||((b.s.size||0)-(a.s.size||0))).slice(0,10);
@@ -510,16 +522,21 @@ function card(){
   if(s.obs&&s.obs[day]) chips.push('<span class="chip on">spilled this day</span>');
   document.getElementById('sChips').innerHTML=chips.join('');
   const c=s.card||{};
-  const F=[[mode==='obs'?'Monitor this day':'Chance this day',v==null?'–':mode==='obs'?(v?'spilled':'no spill'):Math.round(v*100)+'%'],
+  const w=VF.works[s.id], pm=w&&w.prm;
+  const F=[[mode==='obs'?'Monitor this day':backup(s)?'Chance this day (backup)':'Chance this day',v==null?'–':mode==='obs'?(v?'spilled':'no spill'):Math.round(v*100)+'%'],
+    ...(w?[['Spill volume this day (physics)',m3(w.v[day])+' m³'],['Spill-hours this day (physics)',(Math.round(w.h[day]*10)/10)+' h'],
+      ['Treatment capacity',w.cap_m3d.toLocaleString('en-GB')+' m³/day'],['Storm tank',w.tank_m3.toLocaleString('en-GB')+' m³'],
+      ['Groundwater reaches the sewer via',pm.mode===0?'a groundwater store':'river flow'],['Statistical backup this day',s.pe&&s.pe[day]!=null?Math.round(s.pe[day]*100)+'%':'–']]:[]),
     ['Spill-hours / year',c.hours_yr!=null?c.hours_yr.toLocaleString():'–'],
     ['Spills on wet ground alone at',c.flow_trigger!=null?c.flow_trigger+' m³/s':(c.tau?'never seen':'–')],
     ['Rain that tips it (winter)',c.rain_trigger!=null?c.rain_trigger+' mm':'–'],
     ['Rain memory',c.tau?c.tau+' h':'–'],
     ['Wet-ground share',c.wet_share!=null?Math.round(c.wet_share*100)+'%':'–']];
   document.getElementById('sFacts').innerHTML=F.map(f=>`<div><span>${f[0]}</span><b>${f[1]}</b></div>`).join('');
-  document.getElementById('sNote').textContent=s.pe?'Line: model chance each day in the test year. Bars: days the monitor recorded a spill. The pale line marks the selected day.':'Too few reliable spill records to fit and test a model here.';
-  const ds=s.pe?[{type:'bar',data:s.obs.map(x=>x?1:null),backgroundColor:'rgba(240,163,58,0.28)',barPercentage:1,categoryPercentage:1,order:2},
-    {type:'line',data:(mode==='exp'?s.pe:s.pf),borderColor:'#5fb7cf',borderWidth:1.4,pointRadius:0,tension:.25,order:1}]:[];
+  const line=mode==='phys'&&w?w.p:mode==='fc'?s.pf:s.pe;
+  document.getElementById('sNote').textContent=s.pe||w?`Line: ${mode==='phys'&&w?'physics model':'statistical model'} chance each day in the test year. Bars: days the monitor recorded a spill. The pale line marks the selected day. Facts below the physics block come from the statistical backup.`:'Too few reliable spill records to fit and test a model here.';
+  const ds=s.pe||w?[{type:'bar',data:(s.obs||[]).map(x=>x?1:null),backgroundColor:'rgba(240,163,58,0.28)',barPercentage:1,categoryPercentage:1,order:2},
+    {type:'line',data:line,borderColor:'#5fb7cf',borderWidth:1.4,pointRadius:0,tension:.25,order:1}]:[];
   const marker={id:'mk',afterDatasetsDraw(ch){const x=ch.scales.x.getPixelForValue(day);const {top,bottom}=ch.chartArea;const g=ch.ctx;g.save();g.strokeStyle='rgba(230,236,233,.8)';g.lineWidth=1;g.beginPath();g.moveTo(x,top);g.lineTo(x,bottom);g.stroke();g.restore();}};
   if(sChart) sChart.destroy();
   sChart=new Chart(document.getElementById('sChart'),{data:{labels:DATES,datasets:ds},plugins:[marker],options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},
@@ -531,12 +548,13 @@ function spark(){
   const cnt=DATES.map((_,d)=>SITES.reduce((a,s)=>a+(s.obs&&s.obs[d]?1:0),0));const mx=Math.max(...cnt);const bw=r.width/DATES.length;
   cnt.forEach((c,d)=>{const h=c/mx*r.height;g.fillStyle=d===day?'#e6ece9':'rgba(240,163,58,.45)';g.fillRect(d*bw,r.height-h,Math.max(1,bw-.3),h);});
 }
-function scores(){
-  const b=ST.B.brier;const rows=[['Always guess the average','clim'],['Same as yesterday','persistence'],['Spillcast forecast','core_forecast'],['Gradient boosting','gbm_forecast']];
-  document.getElementById('scores').innerHTML='<tr><th>Brier score (lower is better)</th><th>All days</th><th>New spills</th></tr>'+rows.map(r=>`<tr><td${r[1]==='core_forecast'?' class="me"':''}>${r[0]}</td><td${r[1]==='core_forecast'?' class="me"':''}>${b[r[1]].all.toFixed(3)}</td><td${r[1]==='core_forecast'?' class="me"':''}>${b[r[1]].onset.toFixed(3)}</td></tr>`).join('');
-  document.getElementById('scoreNote').textContent=`Test year ${ST.B.start} to ${ST.B.end}, ${ST.B.sites} overflows, ${ST.B.days.toLocaleString()} site-days. Weather alone predicted ${ST.B.exp_h.toLocaleString()} spill-hours; monitors recorded ${ST.B.obs_h.toLocaleString()}. Below: when the forecast says p, how often it really spilled.`;
-  new Chart(document.getElementById('calChart'),{type:'scatter',data:{datasets:[{data:ST.B.cal.map(c=>({x:c[0],y:c[1]})),pointRadius:ST.B.cal.map(c=>2+Math.log10(c[2])*1.6),backgroundColor:'#f0a33a',borderColor:'#f0a33a',showLine:true,borderWidth:1.2},{data:[{x:0,y:0},{x:1,y:1}],showLine:true,borderColor:'rgba(230,236,233,.35)',borderDash:[4,4],pointRadius:0,borderWidth:1}]},
-    options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{min:0,max:1,title:{display:true,text:'Forecast said',color:'#8fa3a3',font:{size:10}},ticks:{color:'#8fa3a3',font:{size:10},stepSize:.5,callback:v=>v*100+'%'},grid:{color:'rgba(255,255,255,.05)'}},y:{min:0,max:1,title:{display:true,text:'Actually spilled',color:'#8fa3a3',font:{size:10}},ticks:{color:'#8fa3a3',font:{size:10},stepSize:.5,callback:v=>v*100+'%'},grid:{color:'rgba(255,255,255,.05)'}}}}});
+function scores(){ // physics model vs the statistical backup, same held-out works and days
+  const B=ST.phys.B, A=ST.phys.A, rows=[['Physics water balance (main)','wb1_p'],['Statistical model (backup)','core_explain'],['Statistical forecast, no rain forecast','core_forecast'],['Same as yesterday','persistence'],['Always guess the average','clim']];
+  const td=(r,x)=>`<td${r==='wb1_p'?' class="me"':''}>${x}</td>`;
+  document.getElementById('scores').innerHTML='<tr><th></th><th>Brier (lower is better)</th><th>Skill</th><th>AUC</th></tr>'+rows.map(([n,k])=>`<tr>${td(k,n)}${td(k,B.rows[k].brier.toFixed(3))}${td(k,B.rows[k].skill.toFixed(2))}${td(k,B.rows[k].auc==null?'–':B.rows[k].auc.toFixed(2))}</tr>`).join('');
+  document.getElementById('scoreNote').textContent=`Test year ${B.start} to ${B.end}, ${B.sites} works, ${B.days.toLocaleString()} site-days (earlier test year: physics skill ${A.rows.wb1_p.skill.toFixed(2)}, statistical ${A.rows.core_explain.skill.toFixed(2)}). The physics model never sees a spill record, yet ranks spill days almost as well (AUC); it predicted ${B.phys_h.toLocaleString()} spill-hours where monitors recorded ${B.obs_h.toLocaleString()}, because daily treated flow cannot show the peaks above capacity. The forecasts know whether a site was already spilling at midnight. Below: when the physics model says p, how often it really spilled.`;
+  new Chart(document.getElementById('calChart'),{type:'scatter',data:{datasets:[{data:B.cal.map(c=>({x:c[0],y:c[1]})),pointRadius:B.cal.map(c=>2+Math.log10(c[2])*1.6),backgroundColor:'#f0a33a',borderColor:'#f0a33a',showLine:true,borderWidth:1.2},{data:[{x:0,y:0},{x:1,y:1}],showLine:true,borderColor:'rgba(230,236,233,.35)',borderDash:[4,4],pointRadius:0,borderWidth:1}]},
+    options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{min:0,max:1,title:{display:true,text:'Physics model said',color:'#8fa3a3',font:{size:10}},ticks:{color:'#8fa3a3',font:{size:10},stepSize:.5,callback:v=>v*100+'%'},grid:{color:'rgba(255,255,255,.05)'}},y:{min:0,max:1,title:{display:true,text:'Actually spilled',color:'#8fa3a3',font:{size:10}},ticks:{color:'#8fa3a3',font:{size:10},stepSize:.5,callback:v=>v*100+'%'},grid:{color:'rgba(255,255,255,.05)'}}}}});
 }
 
 // ===================== state =====================
@@ -548,7 +566,7 @@ function select(i,flyTo){ sel=i; DS=downSet();
 function setDay(d){ day=d; document.getElementById('day').value=d;
   document.getElementById('dlab').textContent=DATES[d]; document.getElementById('dateBig').textContent=fmtDate(DATES[d]);
   kpis(); rank(); card(); spark(); refresh(); }
-function setMode(m){ mode=m; ['obs','exp','fc'].forEach(k=>document.getElementById('m-'+k).setAttribute('aria-pressed',String(k===m))); document.getElementById('modehelp').textContent=HELP[m]; setDay(day); }
+function setMode(m){ mode=m; ['obs','phys','exp','fc'].forEach(k=>document.getElementById('m-'+k).setAttribute('aria-pressed',String(k===m))); document.getElementById('modehelp').textContent=HELP[m]; setDay(day); }
 function setTab(t){ tab=t;
   document.getElementById('t-inspect').setAttribute('aria-pressed',String(t==='inspect')); document.getElementById('t-day').setAttribute('aria-pressed',String(t==='day'));
   document.getElementById('tab-inspect').hidden=t!=='inspect'; document.getElementById('tab-day').hidden=t!=='day';
@@ -558,7 +576,7 @@ function setTab(t){ tab=t;
   else { setMode(mode); requestAnimationFrame(spark); }
   try{ history.replaceState(null,'',t==='day'?'#day':'#inspect'); }catch(e){} }
 document.getElementById('t-inspect').onclick=()=>setTab('inspect'); document.getElementById('t-day').onclick=()=>setTab('day');
-document.getElementById('m-obs').onclick=()=>setMode('obs');document.getElementById('m-exp').onclick=()=>setMode('exp');document.getElementById('m-fc').onclick=()=>setMode('fc');
+document.getElementById('m-obs').onclick=()=>setMode('obs');document.getElementById('m-phys').onclick=()=>setMode('phys');document.getElementById('m-exp').onclick=()=>setMode('exp');document.getElementById('m-fc').onclick=()=>setMode('fc');
 const slider=document.getElementById('day');slider.max=DATES.length-1;slider.oninput=e=>setDay(+e.target.value);
 let timer=null;document.getElementById('play').onclick=e=>{playing=!playing;e.currentTarget.textContent=playing?'❚❚ Pause':'▶ Play';
   if(playing){timer=setInterval(()=>setDay((day+1)%DATES.length),reduce?900:420);}else clearInterval(timer);};

@@ -16,7 +16,8 @@ from common import FOLDS, INT, RAW, TZ, load, rain_for
 import wb
 warnings.filterwarnings("ignore")
 
-OXFORD_TANK = 6831.0      # m3, Oxford STW storm tanks (tender snippet, unverified); elsewhere V = 2 h at capacity
+# storm-tank volumes stated by a source (tanks.csv: Find a Tender, Hammond et al. 2021, Parliament evidence); elsewhere V = 2 h at capacity
+TANKS = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tanks.csv")).set_index("permit").tank_m3.astype(float).to_dict()
 
 
 def drivers():
@@ -45,7 +46,7 @@ def run_one(permit):
     tdv_d = T[permit].reindex(ldays).values
     ref = dict(foul=w.foul_ls * 3.6, cap=(w.fft_ls if w.fft_ls > 0 else w.tdv_p99_m3d / 86.4) * 3.6,
                q_med=float(np.median(wet_h)))
-    V = OXFORD_TANK if permit == "TEMP.2827" and "WB_TANK_H" not in os.environ else None
+    V = TANKS.get(permit) if "WB_TANK_H" not in os.environ else None
     y, m = lab[permit]
     valid_ud = np.bincount(utc_day, weights=m.astype(float), minlength=len(udays)) / np.bincount(utc_day) >= 0.9
     y_ud = (np.bincount(utc_day, weights=np.where(m, y, 0) > 0, minlength=len(udays)) > 0).astype(float)

@@ -7,7 +7,8 @@ Two independent lines of evidence per works, both "leads to check", never findin
      Daily treated flow is measured at the outlet and averaged over the day, so leads use a wider margin: days below
      80% of FFT (SCREEN_SHARE). Days below 92% are reported as context.
   B. Spills the weather doesn't explain. Test years only (Oct 2024 - Oct 2026): days the monitor recorded 1+ hour of
-     spilling while both the statistical model and the water balance gave under 5% chance from the rain and wetness.
+     spilling while both the statistical model and the physics-only water balance (spilling starts at capacity, no
+     spill records used) gave under 5% chance from the rain and wetness.
 Context from Thames Water's own 2025 EDM return: asset type, stated reason for high spilling, investigation and
 improvement activity. Run from the repo root after scripts/model/8_wb_prep.py, 9_wb_fit.py and 10_wb_evaluate.py."""
 import json
@@ -70,7 +71,7 @@ for p, w in W.iterrows():
     well_below = allday & (q < SCREEN_SHARE * fft) if fft else allday & False
     # B: spill days the weather doesn't explain (out-of-sample test years)
     e = M[M.site == p]
-    unexp = e[(e.h >= 1) & (e.core_explain < UNEXPLAINED_P) & (e.wb_p < UNEXPLAINED_P)]
+    unexp = e[(e.h >= 1) & (e.core_explain < UNEXPLAINED_P) & (e.wb1_p < UNEXPLAINED_P)]
     spill_days_test = int((e.h >= 1).sum())
 
     r = ar.loc[p] if p in ar.index else None

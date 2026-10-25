@@ -1,6 +1,6 @@
-# 02 · Prior work and our gap
+# 08 · Prior work and our gap
 
-**Gap:** no open tool issues a **calibrated, forward-looking spill probability per overflow** that uses a **groundwater state**. Existing work maps spills after they happen, detects them retrospectively, explains drivers across sites, or is proprietary.
+**Gap:** no open tool tells a regulator which works spill when the physics says they shouldn't. Existing work maps spills after they happen, detects them retrospectively at a few works, explains drivers across sites, or is proprietary.
 
 | Work | What it does | What it doesn't |
 | --- | --- | --- |
@@ -14,4 +14,4 @@
 | [WASP](https://www.ofwat.gov.uk/wp-content/uploads/2023/05/WASP-Response-to-Ofwat-consultation-on-storm-overflows.-1.pdf) | Joins EDM with rainfall to flag spills outside permit conditions | Rules-based; no groundwater; not probabilistic |
 | Thames Water Oxford GISMP | Eyeballs monthly rainfall against monthly spills | Concludes there is "insufficient evidence to support the validity of this correlation". **Our opening line.** |
 
-**Pitch in one line:** an open, per-overflow, calibrated daily spill forecast (chance, duration, and an estimated volume at Oxford STW) with a groundwater/infiltration state. It is back-tested out of sample against persistence, a rain-threshold rule and the EA bathing-water flag. Its residuals flag dry-weather spills.
+**Pitch in one line:** an open, physics-based water balance of every treatment works around Oxford, fitted only to the flow each works treated, that flags spills while treating below the permit and spills the weather doesn't explain, scored out of sample against a statistical model and persistence. Closest prior work: Hammond et al. (2 works, machine learning on effluent flow) and WWCompose (flow decomposition, no spills).
