@@ -14,9 +14,9 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-from common import INT, RAW, TZ
+from common import DATA_END, INT, RAW, TZ
 FLOW_LAG_H = int(sys.argv[1]) if len(sys.argv) > 1 else 12
-idx = pd.date_range("2022-04-01", "2026-10-22 23:00", freq="1h", tz="UTC")
+idx = pd.date_range("2022-04-01", DATA_END, freq="1h", tz="UTC")
 sites = pd.read_csv(os.path.join(INT, "sites61.csv"))
 
 # ---------------- rain ----------------

@@ -20,7 +20,8 @@ Sewage works may discharge untreated sewage into rivers only in storms, and only
 - **Physics works without seeing a spill record:** on the held-out year (Oct 2025 – Oct 2026) it ranks spill days with a median AUC of 0.96 per works, against 0.98 for the statistical model fitted to spills.
 - **Its numbers mean what they say:** fitted foul flow is 163 litres per person per day; fitted capacity is within 7% of the published permitted flow; peak infiltration matches Thames Water's own allowance (median ratio 1.07); the standard 2-hour storm-tank rule is within 6–18% of the real tanks at the 4 works where we found them.
 - **The watchlist:** see [04-watchlist.md](04-watchlist.md) for the current leads. Clearest case: Shabbington treated a median 22% of its permitted flow on 52 of its 54 all-day spill days.
-- **Honest limits:** physics undercounts spill-hours by 30% because daily treated flow can't show the peaks above capacity; spill volumes rank works but can't be checked; leads are reasons to look, not proof of a breach.
+- **Live test on the 23–24 Oct storm:** on the storm day the physics model expected 16.2 spills and 16 happened; it caught 10 of them. It also forecasts the next 7 days from the ECMWF ensemble rain forecast ([02 §Forecast](02-physical-model.md#forecast)).
+- **Honest limits:** physics undercounts spill-hours by 27% because daily treated flow can't show the peaks above capacity; spill volumes rank works but can't be checked; leads are reasons to look, not proof of a breach.
 
 ## Where things are
 

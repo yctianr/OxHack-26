@@ -1,15 +1,16 @@
-"""The physics-only water balance, packed for the website. Writes web/data/physics.json.
+"""The physics water balance, packed for the website. Writes web/data/physics.json.
 
 Physics only: spilling starts at the works' measured capacity once its storm tank is full (wb1_* in 9_wb_fit.py), so no
-spill record shapes these numbers. Fold B parameters, held-out test year (1 Oct 2025 to 22 Oct 2026).
-Per works: daily chance of a spill, spill-hours and spill volume (the 200-run ensemble from 9_wb_fit.py), the fitted
-parameters, and the state of its stores at the start of each day (soil deficit, groundwater, routed rain, tank).
-Shared: hourly rain at each gauge, evaporation, Thames flow at Farmoor and local hour for each day, so the page can
-rerun one day of the model with different rain (scenario.html). The check at the end reruns that one-day version here
-at the rain that fell and compares it with the full ensemble.
+spill record shapes these numbers. Fold B parameters; the website's days are the held-out test year (outfalls.json),
+followed by the 7-day forecast from scripts/model/11_forecast.py when it has been run.
+Per works: daily chance of a spill, spill-hours and spill volume (the ensembles from 9_wb_fit.py and 11_forecast.py), the
+fitted parameters, and the state of its stores at the start of each day (soil deficit, groundwater, routed rain, tank).
+Shared: hourly rain at each gauge (ensemble mean on forecast days), evaporation, Thames flow at Farmoor and local hour
+for each day, so the page can rerun one day of the model with different rain (scenario.html). The check at the end
+reruns that one-day version here at the rain that fell and compares it with the full ensemble.
 Also the river-glow scale: on each day every river link gets (spill volume from the works upstream) divided by its
 upstream river length, a stand-in for dilution; K and S99 are the median and 99th percentile of the non-zero values.
-Run from the repo root after 9_wb_fit.py and data.py."""
+Run from the repo root after 9_wb_fit.py, 11_forecast.py and data.py."""
 import importlib.util
 import json
 import os
@@ -35,78 +36,24 @@ lhour = idx.tz_convert("Europe/London").hour.values
 utc = np.asarray(idx.strftime("%Y-%m-%d"))
 hours = {d: np.flatnonzero(utc == d) for d in dates}                       # the 24 UTC hours of each day
 gauges = sorted(c[5:] for c in inp.columns if c.startswith("rain_"))
-
-
-def states(prm, rain):
-    """Deterministic hourly run (no inflow error) from a warm-up year; returns D, G, routed, tank before each real hour."""
-    n_warm = 8760
-    r = np.r_[rain[:n_warm], rain]
-    pet, wet = np.r_[pet_h[:n_warm], pet_h], np.r_[wet_h[:n_warm], wet_h]
-    shape = 1 + wb.DIURNAL_AMP * np.cos(2 * np.pi * (np.r_[lhour[:n_warm], lhour] - wb.DIURNAL_PEAK_H) / 24)
-    F, A, tf, k, p1, p2, C, As, V, mode = (prm[x] for x in ("F", "A", "tf", "k", "p1", "p2", "C", "As", "V", "mode"))
-    af = np.exp(-1 / tf)
-    ag = np.exp(-1 / (p1 * 24)) if mode == 0 else 0.0
-    routed, Dd, G, tank = 0.0, 0.5 * p2, 0.0, 0.0
-    out = np.empty((len(rain), 4))
-    for t in range(len(r)):
-        if t >= n_warm:
-            out[t - n_warm] = Dd, G, routed, tank
-        routed = af * routed + (1 - af) * r[t]
-        Dd += pet[t] * (1 - Dd / p2) - r[t]
-        rech = 0.0
-        if Dd < 0:
-            rech, Dd = -Dd, 0.0
-        elif Dd > p2:
-            Dd = p2
-        if mode == 0:
-            G = ag * G + rech
-            infil = k * G
-        else:
-            infil = k * max(0.0, wet[t] - p1)
-        q = F * shape[t] + infil + 10 * (A + As * (1 - Dd / p2)) * routed
-        if q > C:
-            tank = min(V, tank + q - C)
-        else:
-            tank -= min(tank, C - q)
-    return out
+FC = os.path.exists("data/interim/wb_forecast.pkl")
+if FC:
+    F = pd.read_pickle("data/interim/wb_forecast.pkl")
+    FD = json.load(open("data/interim/wb_forecast_drivers.json"))
+    assert FD["gauges"] == gauges and pd.Timestamp(FD["dates"][0]) == pd.Timestamp(dates[-1]) + pd.Timedelta(days=1), \
+        "forecast doesn't follow the observed days: rerun 11_forecast.py"
 
 
 def one_day(prm, s0, rain, pet, wet, lh, n=200, seed=0):
     """The page's version: one UTC day from its start state, inflow error drawn once per run. Returns p, hours, m3."""
-    F, A, tf, k, p1, p2, C, As, V, mode, sig = (prm[x] for x in ("F", "A", "tf", "k", "p1", "p2", "C", "As", "V", "mode", "sig"))
-    af, ag = np.exp(-1 / tf), (np.exp(-1 / (p1 * 24)) if mode == 0 else 0.0)
-    e = np.random.default_rng(seed).standard_normal(n) * sig
+    e = np.random.default_rng(seed).standard_normal(n) * prm["sig"]
     spilled, hrs, vol = 0, 0.0, 0.0
     for j in range(n):
-        Dd, G, routed, tank = s0
-        mult = np.exp(e[j] - sig ** 2 / 2)
-        on = False
+        s, mult, on = list(s0), np.exp(e[j] - prm["sig"] ** 2 / 2), False
         for t in range(len(rain)):
-            routed = af * routed + (1 - af) * rain[t]
-            Dd += pet[t] * (1 - Dd / p2) - rain[t]
-            rech = 0.0
-            if Dd < 0:
-                rech, Dd = -Dd, 0.0
-            elif Dd > p2:
-                Dd = p2
-            if mode == 0:
-                G = ag * G + rech
-                infil = k * G
-            else:
-                infil = k * max(0.0, wet[t] - p1)
-            q = (F * (1 + wb.DIURNAL_AMP * np.cos(2 * np.pi * (lh[t] - wb.DIURNAL_PEAK_H) / 24)) + infil
-                 + 10 * (A + As * (1 - Dd / p2)) * routed) * mult
-            if q > C:
-                ex = q - C
-                if ex <= V - tank:
-                    tank += ex
-                else:
-                    sp = ex - (V - tank)
-                    tank = V
-                    if sp > 1e-6:
-                        on, hrs, vol = True, hrs + 1, vol + sp
-            else:
-                tank -= min(tank, C - q)
+            sp = wb.step(prm, s, rain[t], pet[t], wet[t], lh[t], mult)
+            if sp > 1e-6:
+                on, hrs, vol = True, hrs + 1, vol + sp
         spilled += on
     return spilled / n, hrs / n, vol / n
 
@@ -115,41 +62,57 @@ works, check = {}, []
 for p, g in D.groupby("site"):
     g = g.set_index("day").reindex(dates)
     r = P.loc[p]
-    mode = 0 if r["mode"] == "soil" else 1
-    prm = dict(mode=mode, F=r.foul_m3d / 24, A=r.area_ha, tf=r.tau_fast_h, k=r.k, p1=r.tau_g_d if mode == 0 else r.q0_m3s,
-               p2=r.dmax_mm, C=r.cap_m3d / 24, As=r.area_sat_ha, V=r.tank_m3, sig=r.sigma)
+    prm = wb.params_of(r)
     a, b, d1, d2 = si.loc[p, ["rain1", "rain2", "d1", "d2"]]
     w1 = (1 / d1 ** 2) / (1 / d1 ** 2 + 1 / d2 ** 2)
     rain = w1 * inp[f"rain_{a}"].values + (1 - w1) * inp[f"rain_{b}"].values
-    S = states(prm, rain)
-    works[p] = dict(p=[round(float(x), 3) for x in g.wb1_p], h=[round(float(x), 1) for x in g.wb1_hours],
-                    v=[int(round(x)) for x in g.wb1_vol_m3], cap_m3d=int(round(r.cap_m3d)), tank_m3=int(round(r.tank_m3)),
-                    tank_src=f"source: {TANKS.cite[p]}" if p in TANKS.index else "assumed: 2 hours at capacity",
-                    prm={k_: (int(v) if k_ == "mode" else float(f"{v:.6g}")) for k_, v in prm.items()},
-                    g=[gauges.index(a), gauges.index(b), round(float(w1), 4)],
-                    s=[[float(f"{x:.5g}") for x in S[hours[d][0]]] for d in dates])
+    S, _ = wb.hourly_states(prm, rain, pet_h, wet_h, lhour)
+    w = dict(p=[round(float(x), 3) for x in g.wb1_p], h=[round(float(x), 1) for x in g.wb1_hours],
+             v=[int(round(x)) for x in g.wb1_vol_m3], cap_m3d=int(round(r.cap_m3d)), tank_m3=int(round(r.tank_m3)),
+             tank_src=f"source: {TANKS.cite[p]}" if p in TANKS.index else "assumed: 2 hours at capacity",
+             prm={k_: (int(v) if k_ == "mode" else float(f"{v:.6g}")) for k_, v in prm.items()},
+             g=[gauges.index(a), gauges.index(b), round(float(w1), 4)],
+             s=[[float(f"{x:.5g}") for x in S[hours[d][0]]] for d in dates])
+    if FC:
+        f = F[F.site == p].set_index("date").reindex(FD["dates"])
+        w["p"] += [round(float(x), 3) for x in f.p]
+        w["h"] += [round(float(x), 1) for x in f.hours]
+        w["v"] += [int(round(x)) for x in f.vol_m3]
+        w["rain_p90"] = [round(float(x), 1) for x in f.rain_p90]
+        w["s"] += FD["states"][p]
+    works[p] = w
     for d in dates[::29]:                                   # spot-check the page's one-day version
         h = hours[d]
         pj, hj, vj = one_day(prm, S[h[0]], rain[h], pet_h[h], wet_h[h], lhour[h])
-        check.append((p, d, works[p]["p"][dates.index(d)], pj, works[p]["v"][dates.index(d)], vj))
+        check.append((p, d, w["p"][dates.index(d)], pj, w["v"][dates.index(d)], vj))
 
 drv = dict(gauges=gauges,
            rain=[[[round(float(inp[f"rain_{gg}"].values[i]), 2) for i in hours[d]] for d in dates] for gg in gauges],
            pet=[[round(float(pet_h[i]), 4) for i in hours[d]] for d in dates],
            wet=[[round(float(wet_h[i]), 3) for i in hours[d]] for d in dates],
            lh=[[int(lhour[i]) for i in hours[d]] for d in dates])
+forecast = None
+if FC:
+    for gi in range(len(gauges)):
+        drv["rain"][gi] += FD["rain"][gi]
+    for k in ("pet", "wet", "lh"):
+        drv[k] += FD[k]
+    forecast = dict(start=len(dates), issued=FD["issued"], model=FD["model"], members=FD["members"])
 
-# river-glow scale over link-days
+# river-glow scale over observed link-days
 ix = {s["id"]: i for i, s in enumerate(O["sites"])}
 V = np.zeros((len(O["sites"]), len(dates)))
 for p, w in works.items():
-    V[ix[p]] = w["v"]
+    V[ix[p]] = w["v"][:len(dates)]
 vals = np.concatenate([(V[r["u"]].sum(0) / max(r["L"], 2)) for r in RV if r["u"]])
 vals = vals[vals > 0]
 scale = dict(K=float(np.quantile(vals, 0.5)), S99=float(np.quantile(vals, 0.99)))
-json.dump(dict(dates=dates, scale=scale, drivers=drv, works=works), open("web/data/physics.json", "w"), separators=(",", ":"))
+all_dates = dates + (FD["dates"] if FC else [])
+json.dump(dict(dates=all_dates, forecast=forecast, scale=scale, drivers=drv, works=works),
+          open("web/data/physics.json", "w"), separators=(",", ":"))
 
 c = pd.DataFrame(check, columns=["site", "date", "p_ens", "p_day", "v_ens", "v_day"])
-print(f"{len(works)} works; {os.path.getsize('web/data/physics.json') / 1e6:.2f} MB; glow scale K={scale['K']:.1f} S99={scale['S99']:.1f}")
+print(f"{len(works)} works; {len(dates)} observed days + {len(all_dates) - len(dates)} forecast; "
+      f"{os.path.getsize('web/data/physics.json') / 1e6:.2f} MB; glow scale K={scale['K']:.1f} S99={scale['S99']:.1f}")
 print(f"one-day version vs full ensemble, {len(c)} site-days: |dp| median {np.median(abs(c.p_ens - c.p_day)):.3f}, "
       f"p90 {np.quantile(abs(c.p_ens - c.p_day), .9):.3f}; volume correlation {np.corrcoef(c.v_ens, c.v_day)[0, 1]:.3f}")

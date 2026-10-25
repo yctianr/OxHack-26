@@ -131,6 +131,14 @@ Everything here is exactly as downloaded, in `data/raw/`.
 | **File** | `openmeteo/et0_oxford_daily.csv` |
 | **Used for** | The water balance's soil-moisture store, which decides when ground is saturated and starts running off into the sewers. Only the evaporation column is used; rain comes from the EA gauges |
 
+### 1.8b Weather forecast: *the next 7 days*
+
+| | |
+| --- | --- |
+| **What it is** | Hourly precipitation from all 51 members of the ECMWF IFS 0.25° ensemble at each of the 10 EA gauge locations; daily FAO reference evaporation for Oxford |
+| **Source** | Open-Meteo [ensemble API](https://open-meteo.com/en/docs/ensemble-api) and [forecast API](https://open-meteo.com/en/docs), fetched live by `scripts/model/11_forecast.py` (CC BY 4.0; ECMWF open data, CC BY 4.0) |
+| **Used for** | The physics model's 7-day forecast ([02-physical-model.md](02-physical-model.md#forecast)); not stored in `data/raw` |
+
 ### 1.9 Map data: *rivers and terrain for the 3D map*
 
 | Data | Source | File | Used for |
@@ -218,7 +226,7 @@ All in `data/interim/` (not in git).
 | File | What's in it | How it was made | Size |
 | --- | --- | --- | --- |
 | `sites61.csv` | The 61 overflows: permit number, name, grid location, latitude/longitude | `2_sites.py`, from the alert locations | 61 rows |
-| `labels_clean.pkl` | For each overflow, hour by hour (1 Apr 2022 → 22 Oct 2026, UTC): **what fraction of the hour it was spilling** (0 to 1) and **whether that hour is trustworthy** (monitor working, site-year not broken) | From `events.csv` and `offline.csv`, using exact minutes | 61 sites × 39,984 hours |
+| `labels_clean.pkl` | For each overflow, hour by hour (1 Apr 2022 → 24 Oct 2026, UTC): **what fraction of the hour it was spilling** (0 to 1) and **whether that hour is trustworthy** (monitor working, site-year not broken) | From `events.csv` and `offline.csv`, using exact minutes | 61 sites × 39,984 hours |
 | `inputs_clean.pkl` | Hour by hour: rain at each of the 10 gauges (checked and gap-filled) and the log of river flow at each flow gauge (as known at that hour) | From the gauge files | 39,984 hours × 20 columns |
 | `site_inputs.csv` | Which two rain gauges each overflow uses, and how far away they are | Nearest two gauges | 61 rows |
 | `site_quality.csv` | Per overflow: which years were excluded, what share of time is trustworthy, total spill hours | From the audit | 61 rows |
@@ -310,7 +318,7 @@ python scripts/web/physics.py
 
 Order matters: `watchlist.py` and `build_stats.py` need `10_wb_evaluate.py`; `whatif.py` and `physics.py` need `data.py`. Hand downloads: Thames Water [storm discharge and flow data](https://www.thameswater.co.uk/about-us/performance/river-health/storm-discharge-and-flow-data) (TDV and annual returns; direct file links work with a browser user agent), the [ORIC capacity sheet](https://oxfordrivers.ceh.ac.uk/data/ORIC_Thames_Sewage_Works_Capacity_Final.xlsx), and [OS Open Rivers](https://osdatahub.os.uk/downloads/open/OpenRivers).
 
-**End dates are hard-coded** to the 22–23 Oct 2026 download: `4_build_clean.py` (hours to 2026-10-22 23:00), `common.py` (fold B ends 2026-10-23) and `8_wb_prep.py` (evaporation to 2026-10-22). Move all three to extend the data.
+**One end date:** `DATA_END` in `scripts/model/common.py` (now 2026-10-24 23:00 UTC) sets the last hour of observed data for `4_build_clean.py`, the fold B test window and the evaporation download in `8_wb_prep.py`. Move it and rerun to extend everything; the forecast (`11_forecast.py`) starts the hour after it.
 
 ## Licences and what we publish
 
@@ -344,4 +352,4 @@ What the public website republishes, worth checking before it goes live:
 | **Water day** | The EA's day for river flow: 09:00 to 09:00 |
 | **"Suspect" flag** | The EA's marker that a reading may be wrong |
 | **Site-year** | One overflow's record for one calendar year |
-| **Fold A / B** | The two held-out test periods: A = Oct 2024 → Sep 2025, B = Oct 2025 → 22 Oct 2026 |
+| **Fold A / B** | The two held-out test periods: A = Oct 2024 → Sep 2025, B = Oct 2025 → 24 Oct 2026 |

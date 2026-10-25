@@ -114,7 +114,7 @@ for p, w in W.iterrows():
 out.sort(key=lambda d: ({"strong": 0, "moderate": 1, "low": 2, "insufficient": 3}[d["level"]], -d["score"]))
 os.makedirs(OUT, exist_ok=True)
 meta = dict(days=[d.strftime("%Y-%m-%d") for d in days], permit_share=PERMIT_SHARE, screen_share=SCREEN_SHARE, all_day_h=ALL_DAY_H,
-            unexplained_p=UNEXPLAINED_P, test_window=["2024-10-01", "2026-10-22"],
+            unexplained_p=UNEXPLAINED_P, test_window=["2024-10-01", str(M.date.max().date())],
             totals=dict(works=len(out), strong=sum(d["level"] == "strong" for d in out),
                         moderate=sum(d["level"] == "moderate" for d in out),
                         below_permit_days=sum(d["below_permit_days"] for d in out),

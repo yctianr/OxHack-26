@@ -250,10 +250,12 @@ const BOUNDS=[-1.6700466447550568,51.49514987630958,-0.8215746622899808,52.00396
 const EX=3;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const [O,RV,ST,WD,VF]=await Promise.all(['data/outfalls.json','data/rivers.json','data/stats.json','watchlist/data.json','data/physics.json'].map(u=>fetch(u).then(r=>r.json())));
-const DATES=O.dates, SITES=O.sites;
+// days: the observed test year, then the physics model's 7-day forecast (physics.json) when one was built
+const DATES=VF.dates||O.dates, NOBS=O.dates.length, FC=VF.forecast, SITES=O.sites;
+const isFc=d=>d>=NOBS;
 const WM=WD.meta, WL={}; WD.works.forEach(w=>WL[w.id]=w);
 const SI={}; SITES.forEach((s,i)=>SI[s.id]=i);
-let day=DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;
+let day=FC?FC.start:DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;   // opens on today's forecast
 let tab='inspect', mode='phys', is3d=true, playing=false;
 let sel=SI[WD.works[0].id], wlFilter='leads', wfYear='all';
 
@@ -262,7 +264,8 @@ const LVW={strong:1,moderate:0.55,low:0,insufficient:0};
 const LVC={strong:[255,93,74],moderate:[240,163,58],low:[128,146,146],insufficient:[90,104,104]};
 const LVL={strong:'Strong lead',moderate:'Moderate lead',low:'Low',insufficient:'Not enough data'};
 // physics water balance is the main model; where a site has no treated-flow data the statistical model stands in
-function val(s,d){ if(mode==='phys'){const w=VF.works[s.id]; if(w) return w.p[d]; return s.pe?s.pe[d]:null;}
+function val(s,d){ if(mode==='phys'){const w=VF.works[s.id]; if(w) return w.p[d]; return s.pe&&!isFc(d)?s.pe[d]:null;}
+  if(isFc(d)) return null;   // monitors and the statistical model stop at the observed data
   if(!s.pe) return null; const a=mode==='obs'?s.obs:mode==='exp'?s.pe:s.pf; return a[d]; }
 const backup=s=>mode==='phys'&&!VF.works[s.id]&&!!s.pe;
 const W=SITES.map(s=>s.type==='works'?(s.size?s.size/1000:0.3):0.15);
@@ -499,9 +502,10 @@ const HELP={obs:'Spill monitors: did each overflow spill that day? This is the t
   phys:'Physics water balance of each treatment works, given the rain that fell: sewage, runoff and groundwater in; treatment up to capacity; a storm tank; a spill only once the tank is full. Fitted only to treated flow, never to spill records. Overflows with no treated-flow data show the statistical backup.',
   exp:'Statistical backup: a per-overflow logistic model of rain and wet ground, given the rain that fell. Fitted to spill records.',
   fc:'Statistical forecast: standing at midnight with no rain forecast: today\'s chance of a spill, from wet ground, rain so far and whether it is already spilling.'};
+function help(){ return HELP[mode]+(isFc(day)?(mode==='phys'?` This day is a forecast: the physics model runs on all ${FC.members} members of the ECMWF ensemble rain forecast (issued ${FC.issued}), with Thames flow held at its last reading.`:' No monitor data or statistical forecast for this day yet; switch to the physics model.'):''); }
 function kpis(){
   let n=0,obs=0;SITES.forEach(s=>{if(!s.pe)return;n++;obs+=s.obs[day]||0;});
-  document.getElementById('k1').textContent=`${obs}/${n}`;document.getElementById('k1l').textContent='overflows spilled (monitors)';
+  document.getElementById('k1').textContent=isFc(day)?'–':`${obs}/${n}`;document.getElementById('k1l').textContent=isFc(day)?'forecast day: no monitor data yet':'overflows spilled (monitors)';
   if(mode==='obs'){let h=0;SITES.forEach(s=>{if(s.hours)h+=s.hours[day]||0});document.getElementById('k2').textContent=Math.round(h);document.getElementById('k2l').textContent='spill-hours that day';}
   else{let e=0;SITES.forEach(s=>{if(s.pe)e+=val(s,day)||0});document.getElementById('k2').textContent=e.toFixed(1);document.getElementById('k2l').textContent={phys:'expected (physics, backup where needed)',exp:'expected (statistical)',fc:'expected (statistical forecast)'}[mode];}
 }
@@ -564,9 +568,10 @@ function select(i,flyTo){ sel=i; DS=downSet();
   refresh();
   if(flyTo){const s=SITES[i];fly({longitude:s.lon+0.01,latitude:s.lat-0.02,zoom:12.2,pitch:is3d?58:0,bearing:viewState.bearing||-15});} }
 function setDay(d){ day=d; document.getElementById('day').value=d;
-  document.getElementById('dlab').textContent=DATES[d]; document.getElementById('dateBig').textContent=fmtDate(DATES[d]);
+  document.getElementById('dlab').textContent=DATES[d]+(isFc(d)?' fc':''); document.getElementById('dateBig').textContent=fmtDate(DATES[d])+(isFc(d)?' · forecast':'');
+  document.getElementById('modehelp').textContent=help();
   kpis(); rank(); card(); spark(); refresh(); }
-function setMode(m){ mode=m; ['obs','phys','exp','fc'].forEach(k=>document.getElementById('m-'+k).setAttribute('aria-pressed',String(k===m))); document.getElementById('modehelp').textContent=HELP[m]; setDay(day); }
+function setMode(m){ mode=m; ['obs','phys','exp','fc'].forEach(k=>document.getElementById('m-'+k).setAttribute('aria-pressed',String(k===m))); document.getElementById('modehelp').textContent=help(); setDay(day); }
 function setTab(t){ tab=t;
   document.getElementById('t-inspect').setAttribute('aria-pressed',String(t==='inspect')); document.getElementById('t-day').setAttribute('aria-pressed',String(t==='day'));
   document.getElementById('tab-inspect').hidden=t!=='inspect'; document.getElementById('tab-day').hidden=t!=='day';

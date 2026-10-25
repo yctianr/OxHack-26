@@ -88,18 +88,44 @@ Fitted only to treated flow, the model lands within about 20% of independent pub
 
 ## How well it predicts
 
-Same held-out works and days for every row (fold B: Oct 2025 – 22 Oct 2026; fold A in brackets).
+Same held-out works and days for every row (fold B: Oct 2025 – 24 Oct 2026; fold A in brackets).
 
 | Model | Brier | Skill vs climatology | Median AUC per works |
 | --- | --- | --- | --- |
-| **Physics water balance** (never sees a spill record) | 0.061 (0.076) | 0.47 (0.33) | 0.96 (0.91) |
-| Statistical model, given the rain that fell | 0.047 (0.052) | 0.59 (0.54) | 0.98 (0.97) |
-| Statistical forecast, knows if spilling at midnight | 0.029 (0.034) | 0.75 (0.70) | 0.98 (0.95) |
+| **Physics water balance** (never sees a spill record) | 0.061 (0.076) | 0.47 (0.33) | 0.96 (0.90) |
+| Statistical model, given the rain that fell | 0.048 (0.052) | 0.58 (0.54) | 0.98 (0.97) |
+| Statistical forecast, knows if spilling at midnight | 0.030 (0.034) | 0.74 (0.70) | 0.97 (0.95) |
 | Same as yesterday | 0.032 (0.036) | 0.72 (0.68) | 0.90 (0.86) |
 
 - Physics ranks spill days almost as well as a model fitted to spill records, without ever seeing one. That is the strongest evidence the plumbing is right.
-- **Spill-hours are undercounted by 30%** (median per works-year; typical error 58%). Daily treated flow stops rising at capacity, so the model never sees how far inflow overshot, and that overshoot sets how long a spill lasts.
+- **Spill-hours are undercounted by 27%** (median per works-year; typical error 58%). Daily treated flow stops rising at capacity, so the model never sees how far inflow overshot, and that overshoot sets how long a spill lasts.
 - Errors run both ways per works: Witney's spill-hours are about 2.6× too high, Oxford's about 2.7× too low.
+
+## Live test: the 23–24 Oct storm
+
+Scored after the fact on two days neither model had seen, with the rain that fell (physics: 49 works; statistical: 52 overflows).
+
+| Day | Monitors | Physics: expected spills / caught at ≥50% / false alarms | Statistical: same | Statistical forecast (no rain forecast) |
+| --- | --- | --- | --- | --- |
+| 23 Oct, the storm | 16 spilled, 116 h | 16.2 / 10 of 16 / 5 | 11.3 / 8 of 16 / 1 | 2.6 expected; caught 1 of 16 |
+| 24 Oct, the day after | 3 spilled, 15 h | 12.0 / 3 of 3 / 8 | 15.2 / 3 of 3 / 12 | 7.4 expected; caught 1 of 3 |
+
+- **On the storm day the physics model got the total right** (16.2 expected, 16 spilled) and caught more spills than the statistical model.
+- **It missed Oxford** (8 h spilled, 0% chance): Oxford's spill-hours run about 2.7× under the model in general.
+- **The day after, it kept works spilling that had stopped** (103 model spill-hours vs 15): the storm tanks and saturated ground drain faster in reality than in the model.
+- **Without rain, a forecast is blind to storms:** the midnight statistical forecast caught 1 of 16. That is why the physics forecast below runs on forecast rain.
+
+## Forecast
+
+`scripts/model/11_forecast.py` runs every works 7 days past the end of the observed data:
+
+- **Rain:** all 51 members of the ECMWF IFS 0.25° ensemble ([Open-Meteo ensemble API](https://open-meteo.com/en/docs/ensemble-api), CC BY 4.0), hourly, at each EA rain gauge, mixed per works exactly as the observed rain is.
+- **Evaporation:** Open-Meteo's daily FAO reference evaporation forecast for Oxford.
+- **River flow:** Thames at Farmoor held at its last reading (only the 18 river-driven works use it).
+- **Starting state:** each works' soil, groundwater, routed rain and storm tank at the end of the observed data.
+- **Runs:** 4 inflow-error runs per rain member, 204 per works. The chance of a spill is the share that spill; spill-hours and volume are their means. So the chance carries both the weather uncertainty and the model's own.
+
+The first forecast (issued 25 Oct, 10:45 UTC) has 13 works likely to spill today as they drain after the storm, 2 on 26 and 27 Oct, and none from 29 Oct on a mostly dry week. It hasn't been scored yet: the 25–31 Oct monitor records will be the first true forecast test. The website shows the forecast as the last 7 days of its day slider; [the README](../README.md#refresh-the-forecast) says how to refresh it.
 
 ## Spill volume
 

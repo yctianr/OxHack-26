@@ -190,3 +190,57 @@ def fit_threshold(wk, mode, th, sigma, rho, nday, utc_day, nud, y_day, train_ud,
         if best is None or b < best[0]:
             best = (b, f)
     return best[1]
+
+
+# --- plain-Python runs that expose the stores, for the website export and the forecast ---------------------------------
+def params_of(row):
+    """Fitted parameters from a wb_params.csv row, in the model's units (m3/h, ha, h, mm)."""
+    mode = 0 if row["mode"] == "soil" else 1
+    return dict(mode=mode, F=row["foul_m3d"] / 24, A=row["area_ha"], tf=row["tau_fast_h"], k=row["k"],
+                p1=row["tau_g_d"] if mode == 0 else row["q0_m3s"], p2=row["dmax_mm"], C=row["cap_m3d"] / 24,
+                As=row["area_sat_ha"], V=row["tank_m3"], sig=row["sigma"], rho=row["rho"])
+
+
+def step(prm, s, rain, pet, wet, lh, mult=1.0):
+    """One hour from state s = [soil deficit, groundwater, routed rain, tank]; spilling only at capacity with a full
+    tank. Updates s in place; returns the spill (m3) in that hour."""
+    D, G, r, tank = s
+    af = np.exp(-1 / prm["tf"])
+    r = af * r + (1 - af) * rain
+    D += pet * (1 - D / prm["p2"]) - rain
+    rech = 0.0
+    if D < 0:
+        rech, D = -D, 0.0
+    elif D > prm["p2"]:
+        D = prm["p2"]
+    if prm["mode"] == 0:
+        G = np.exp(-1 / (prm["p1"] * 24)) * G + rech
+        infil = prm["k"] * G
+    else:
+        infil = prm["k"] * max(0.0, wet - prm["p1"])
+    shape = 1 + DIURNAL_AMP * np.cos(2 * np.pi * (lh - DIURNAL_PEAK_H) / 24)
+    q = (prm["F"] * shape + infil + 10 * (prm["A"] + prm["As"] * (1 - D / prm["p2"])) * r) * mult
+    C, V, sp = prm["C"], prm["V"], 0.0
+    if q > C:
+        ex = q - C
+        if ex <= V - tank:
+            tank += ex
+        else:
+            sp, tank = ex - (V - tank), V
+    else:
+        tank -= min(tank, C - q)
+    s[:] = D, G, r, tank
+    return sp
+
+
+def hourly_states(prm, rain, pet, wet, lhour, n_warm=8760):
+    """Deterministic run (no inflow error) after a warm-up year: the state before every hour, and after the last."""
+    w = slice(0, n_warm)
+    R, PE, WE, LH = (np.r_[x[w], x] for x in (rain, pet, wet, lhour))
+    s = [0.5 * prm["p2"], 0.0, 0.0, 0.0]
+    out = np.empty((len(rain), 4))
+    for t in range(len(R)):
+        if t >= n_warm:
+            out[t - n_warm] = s
+        step(prm, s, R[t], PE[t], WE[t], LH[t])
+    return out, np.array(s)

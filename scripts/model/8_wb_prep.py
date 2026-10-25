@@ -9,7 +9,7 @@ import re
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
-from common import INT, RAW, TZ, load, rain_for
+from common import DATA_END, INT, RAW, TZ, load, rain_for
 
 # spill-site name -> TDV / ORIC name, where normalising alone doesn't match
 TDV_NAME = {"CLANFIELD": "CLANFIELD MARSH", "CHARLTON ON OTMOOR": "CHARLTON OTMOOR",
@@ -24,10 +24,10 @@ def norm(s):
 
 
 ET0 = os.path.join(RAW, "openmeteo", "et0_oxford_daily.csv")
-if not os.path.exists(ET0):   # daily FAO reference evaporation at Oxford, for the soil-moisture store in wb.py
+if not os.path.exists(ET0) or pd.read_csv(ET0, skiprows=3).iloc[:, 0].max() < DATA_END[:10]:   # daily FAO reference evaporation at Oxford (wb.py soil store); refetched when the data is extended. ERA5 lags ~5 days; missing days are carried forward in 9_wb_fit.py
     import urllib.request
     url = ("https://archive-api.open-meteo.com/v1/archive?latitude=51.75&longitude=-1.26&start_date=2022-01-01"
-           "&end_date=2026-10-22&daily=et0_fao_evapotranspiration,precipitation_sum&timezone=Europe%2FLondon&format=csv")
+           f"&end_date={DATA_END[:10]}&daily=et0_fao_evapotranspiration,precipitation_sum&timezone=Europe%2FLondon&format=csv")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     open(ET0, "wb").write(urllib.request.urlopen(req, timeout=60).read())
 

@@ -9,7 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
-from common import INT
+from common import FOLDS, INT
 
 E = pd.read_pickle(os.path.join(INT, "eval_predictions.pkl"))
 D = pd.read_pickle(os.path.join(INT, "wb_predictions.pkl"))
@@ -70,7 +70,7 @@ print(M.groupby("verdict").apply(lambda g: pd.Series({"site_days": len(g), "work
       **{m: brier(g, m) for m in ["clim", "wb1_p", "wb_p", "core_explain"]}})).round(4).to_string())
 
 print("\n== Treated flow on the test years (daily, the quantity the water balance is fitted to)")
-for fold, t0, t1 in (("A", "2024-10-01", "2025-10-01"), ("B", "2025-10-01", "2026-10-23")):
+for fold, (t0, t1) in FOLDS.items():
     x = Fl[(Fl.fold == fold) & (Fl.date >= t0) & (Fl.date < t1) & Fl.tdv.notna()]
     e = (np.log(x.sim) - np.log(x.tdv)).groupby(x.site).median()
     a = (np.log(x.sim) - np.log(x.tdv)).abs().groupby(x.site).median()

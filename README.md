@@ -53,10 +53,22 @@ python scripts/fetch_data.py dtm --res 20
 # 3. clean data and the statistical backup
 for s in 1_fetch_gauges 2_sites 3_audit 4_build_clean 5_evaluate 6_site_cards; do python scripts/model/$s.py; done
 # 4. physics water balance (8 also downloads daily evaporation from Open-Meteo)
-for s in 8_wb_prep 9_wb_fit 10_wb_evaluate; do python scripts/model/$s.py; done
+for s in 8_wb_prep 9_wb_fit 10_wb_evaluate 11_forecast; do python scripts/model/$s.py; done
 # 5. website data (extra packages: pip install pyproj rasterio pillow)
 for s in rivers terrain texture data physics whatif build_stats watchlist; do python scripts/web/$s.py; done
 ```
+
+## Refresh the forecast
+
+The site's last 7 days are a physics forecast made when the data was last built. To bring it up to date: set `DATA_END` in `scripts/model/common.py` to the last full hour of yesterday (UTC), then
+
+```bash
+python scripts/fetch_data.py thames-alerts && python scripts/fetch_data.py events && python scripts/model/1_fetch_gauges.py
+for s in 3_audit 4_build_clean 5_evaluate 6_site_cards 8_wb_prep 9_wb_fit 10_wb_evaluate 11_forecast; do python scripts/model/$s.py; done
+for s in data whatif watchlist physics build_stats; do python scripts/web/$s.py; done
+```
+
+About 25 minutes in all, most of it the alert download. More: [docs/02-physical-model.md](docs/02-physical-model.md#forecast).
 
 ## Data licences
 

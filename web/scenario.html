@@ -120,9 +120,11 @@ const BOUNDS=[-1.6700466447550568,51.49514987630958,-0.8215746622899808,52.00396
 const EX=3;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const [O,RV,WF,VF]=await Promise.all(['data/outfalls.json','data/rivers.json','data/whatif.json','data/physics.json'].map(u=>fetch(u).then(r=>r.json())));
-const DATES=O.dates, SITES=O.sites, WI=WF.sites;
+// days: the observed test year, then the physics model's 7-day forecast (physics.json) when one was built
+const DATES=VF.dates||O.dates, NOBS=O.dates.length, FC=VF.forecast, SITES=O.sites, WI=WF.sites;
+const isFc=d=>d>=NOBS;
 const $=id=>document.getElementById(id);
-let day=DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;
+let day=FC?FC.start:DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;   // opens on today's forecast
 let sel=-1, heatOn=true, is3d=true, rainOverride=null;   // rainOverride: mm at the selected overflow, this day only
 
 // --- statistical model (backup): one overflow on one day, rain what-if through its rain store ---
@@ -130,7 +132,7 @@ const sig=z=>1/(1+Math.exp(-z));
 function peakStore(f0,R,tau){ // max over the day of the rain store, starting at f0 with R mm spread evenly
   const a=Math.exp(-1/tau), r=R/24; return Math.max(a*f0+tau*r*(1-a), a**24*f0+tau*r*(1-a**24)); }
 function statChance(i,withOverride=true){
-  const s=SITES[i], w=WI[s.id]; if(!w) return null;
+  const s=SITES[i], w=WI[s.id]; if(!w||isFc(day)) return null;   // no statistical forecast with rain
   const base=s.pe&&s.pe[day]!=null?s.pe[day]:sig(w.z[day]);
   if(!withOverride||i!==sel||rainOverride==null) return base;
   return sig(w.z[day]+w.k*(peakStore(w.f0[day],rainOverride,w.tau)-peakStore(w.f0[day],w.r[day],w.tau))); }
@@ -283,9 +285,9 @@ function paintDetail(){
   if(v==null){st.textContent='NOT MODELLED';st.className='status grey';}
   else{st.textContent=v>=0.5?'● LIKELY TO SPILL':'● UNLIKELY TO SPILL';st.className='status '+(v>=0.5?'red':'green');}
   $('st-chance').textContent=pct(v);
-  $('st-chance-sub').textContent=!pw?(v==null?'':'statistical backup'):rainOverride==null?'physics, rain that fell':'physics, this scenario';
+  $('st-chance-sub').textContent=!pw?(v==null?(isFc(day)?'no forecast here':''):'statistical backup'):rainOverride!=null?'physics, this scenario':isFc(day)?`physics, ${FC.members}-member rain forecast`:'physics, rain that fell';
   const o=s.obs?s.obs[day]:null, h=s.hours?s.hours[day]:null;
-  $('st-obs').textContent=o==null?'no data':o?`spilled ${Math.round(h)} h`:'no spill';
+  $('st-obs').textContent=isFc(day)?'not yet':o==null?'no data':o?`spilled ${Math.round(h)} h`:'no spill';
   $('st-vol').textContent=pw?m3(volOf(sel)):'–';
   $('st-hours').textContent=pw?(Math.round(hoursOf(sel)*10)/10)+' h':'–';
   $('st-stat').textContent=pct(statChance(sel,false));
@@ -296,17 +298,17 @@ function paintDetail(){
   $('rainBox').classList.toggle('hidden',!pw&&!w);
   if(!pw&&!w) return;
   const fell=pw?rainDay(pw,day).reduce((a,x)=>a+x,0):w.r[day], R=rainOverride==null?fell:rainOverride;
-  $('rain-mm').textContent=R.toFixed(1)+' mm'+(rainOverride==null?' (measured)':'');
+  $('rain-mm').textContent=R.toFixed(1)+' mm'+(rainOverride==null?(isFc(day)?' (forecast)':' (measured)'):'');
   $('rain-sub').textContent=`24-hour rainfall at this overflow on ${fdate(DATES[day])}`;
   $('rain').value=String(Math.round(R*10)/10); $('reset').disabled=rainOverride==null;   // starts at the measured rain
-  if(rainOverride==null) $('explanation').textContent=`${fell.toFixed(1)} mm fell here that day (two nearest Environment Agency rain gauges). Drag to see how ${pw?'the physics model':'the statistical backup'} responds to more or less rain.`;
-  else if(pw) $('explanation').textContent=`With ${R.toFixed(1)} mm instead of the ${fell.toFixed(1)} mm that fell, the physics model's chance of a spill goes from ${pct(pw.p[day])} to ${pct(v)}, and its spill volume from ${m3(pw.v[day])} to ${m3(volOf(sel))} m³. The soil, groundwater and storm tank start the day as they were; the rain keeps its hourly pattern.`;
+  if(rainOverride==null) $('explanation').textContent=(isFc(day)?`${fell.toFixed(1)} mm forecast here that day: the average of ${FC.members} ECMWF ensemble forecasts${pw&&pw.rain_p90?`; 1 in 10 forecasts gives over ${pw.rain_p90[day-NOBS]} mm`:''}. The chance of a spill runs the physics model on every one of them (forecast issued ${FC.issued}).`:`${fell.toFixed(1)} mm fell here that day (two nearest Environment Agency rain gauges).`)+` Drag to see how ${pw?'the physics model':'the statistical backup'} responds to more or less rain.`;
+  else if(pw) $('explanation').textContent=`With ${R.toFixed(1)} mm instead of the ${fell.toFixed(1)} mm ${isFc(day)?'forecast':'that fell'}, the physics model's chance of a spill goes from ${pct(pw.p[day])} to ${pct(v)}, and its spill volume from ${m3(pw.v[day])} to ${m3(volOf(sel))} m³. The soil, groundwater and storm tank start the day as they were; the rain keeps its hourly pattern.`;
   else $('explanation').textContent=`With ${R.toFixed(1)} mm instead of the ${fell.toFixed(1)} mm that fell, the statistical backup's chance of a spill goes from ${pct(statChance(sel,false))} to ${pct(v)}. How wet the ground already was stays the same.`; }
 function refresh(){ whatIf(); CH=SITES.map((_,i)=>chance(i)); P=RV.map(pressure); TR=trips(); version++; paintList(); paintDetail(); if(reduce) D.setProps({layers:layers(0)}); }
 function select(i,flyTo){ sel=i; rainOverride=null; DS=i>=0?new Set(SITES[i].downstream):null; refresh();
   if(i>=0){$('side').scrollTop=0; $('details').scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});}
   if(flyTo&&i>=0){const s=SITES[i];fly({longitude:s.lon+0.01,latitude:s.lat-0.02,zoom:12.2,pitch:is3d?58:0,bearing:viewState.bearing||-15});} }
-function setDay(d){ day=d; rainOverride=null; $('day').value=d; $('dayLabel').textContent=fmtDate(DATES[d]); refresh(); }
+function setDay(d){ day=d; rainOverride=null; $('day').value=d; $('dayLabel').textContent=fmtDate(DATES[d])+(isFc(d)?' · forecast':''); refresh(); }
 $('day').oninput=e=>setDay(+e.target.value);
 $('toggle').onclick=()=>{heatOn=!heatOn;$('toggle').classList.toggle('on',heatOn);$('toggle').setAttribute('aria-checked',String(heatOn));refresh();};
 $('rain').oninput=e=>{if(sel<0)return; rainOverride=+e.target.value; refresh();};

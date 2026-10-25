@@ -17,7 +17,7 @@ Only needed after the models or data change. It needs the full `data/` folder (s
     python scripts/web/terrain.py     # Terrarium tiles (AWS) + EA LIDAR 20 m blend -> web/data/elevation.png
     python scripts/web/texture.py     # hillshade texture -> web/data/terrain.jpg
     python scripts/web/data.py        # outfalls.json (sites, statistical chances, monitor results, downstream links, flow paths) + rivers.json
-    python scripts/web/physics.py     # physics.json: physics model per works, states and drivers for the in-browser rerun, glow scale (after 9_wb_fit.py, data.py)
+    python scripts/web/physics.py     # physics.json: physics model per works (test year + 7-day forecast), states and drivers for the in-browser rerun, glow scale (after 9_wb_fit.py, 11_forecast.py, data.py)
     python scripts/web/whatif.py      # whatif.json: statistical backup's rain response (after data.py)
     python scripts/web/build_stats.py # stats.json: both models scored on the same held-out days (after 5 and 9)
     python scripts/web/watchlist.py   # watchlist/data.json: the regulator watchlist (after scripts/model/8, 9, 10)

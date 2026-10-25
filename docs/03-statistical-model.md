@@ -6,7 +6,7 @@ The statistical model is Spillcast's **backup**. The [physics water balance](02-
 - **Forecasting.** Standing at midnight, it uses whether the overflow is already spilling, which the physics model doesn't.
 - **A second opinion.** A spill day counts as unexplained only if *both* models gave it under 5% chance ([04-watchlist.md](04-watchlist.md)).
 
-It predicts spill days slightly better than physics (skill 0.59 vs 0.47 in the latest test year) because it is fitted to spill records. That same fact makes it the wrong tool for judging whether a works spills when it shouldn't: it learns each works' habits, including bad ones.
+It predicts spill days slightly better than physics (skill 0.58 vs 0.47 in the latest test year) because it is fitted to spill records. That same fact makes it the wrong tool for judging whether a works spills when it shouldn't: it learns each works' habits, including bad ones.
 
 Code: `scripts/model/1–7`, shared code in `common.py`. Full audit history: [archive/11-system-review.md](archive/11-system-review.md).
 

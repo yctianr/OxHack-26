@@ -12,7 +12,8 @@ Updated Sun 25 Oct 2026, ~10:00 GMT. **Code freeze 14:00, submit 15:30, deadline
 | Regulator watchlist (decision 1) | Done | [04-watchlist.md](04-watchlist.md) |
 | Website: watchlist, daily views of both models, rain-scenario page with the physics model running in the browser | Done, local only | [06-website.md](06-website.md) |
 | Hosting | **Not done** | below |
-| Live test on the 23–24 Oct storm | **Not done** | below |
+| Live test on the 23–24 Oct storm: data now runs to 24 Oct | Done | [02 §Live test](02-physical-model.md#live-test-the-2324-oct-storm) |
+| 7-day physics forecast from the ECMWF ensemble (issued 25 Oct, 10:45 UTC), on both pages | Done | [02 §Forecast](02-physical-model.md#forecast) |
 | Harm ranking (decision 2) | **Not done** | below |
 | Write-up and video | **Not done** | below |
 
@@ -21,7 +22,7 @@ Updated Sun 25 Oct 2026, ~10:00 GMT. **Code freeze 14:00, submit 15:30, deadline
 | When | Task |
 | --- | --- |
 | Now | **Host the site.** Drag `web/` onto <https://app.netlify.com/drop>, rename to `spillcast.netlify.app`. Check the two licence questions below first. |
-| Before 12:00 | **Live test.** Re-run `fetch_data.py thames-alerts`, `events` and `1_fetch_gauges.py`, move the three hard-coded end dates (gotchas), rebuild, and score the 23–24 Oct spills with the frozen models. The strongest single slide for quant judges. |
+| Before hosting | **Refresh the forecast** if time has passed since 10:45 UTC: README, "Refresh the forecast" (about 25 minutes).
 | Before 13:30 | **Harm ranking (decision 2).** The physics model's spill volume ÷ river flow that day (EA gauges) × sensitivity (SSSI/SAC, chalk streams, Oxford Meadows SAC). Notes and cost figures: [archive/05-decisions-and-costs.md](archive/05-decisions-and-costs.md). Check first whether EA water-quality samples near the outfalls can validate it. |
 | 14:00 | **Code freeze** |
 | 14:00–15:30 | Write-up and 2-minute video: the inspector's decision → the physics → the evidence → honest limits |
@@ -50,8 +51,8 @@ Updated Sun 25 Oct 2026, ~10:00 GMT. **Code freeze 14:00, submit 15:30, deadline
 
 - **Setup:** system Python has no pandas. `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`. Run every script from the repo root.
 - **Data isn't in git** (~460 MB). Rebuild with the README; hand-download list in [05-data.md](05-data.md#rebuilding-the-data). Rain's `tdv_datasets/` and `edm_datasets/` use different file names from what the scripts expect.
-- **Hard-coded end dates:** `4_build_clean.py` (hours to 2026-10-22 23:00), `common.py` (fold B ends 2026-10-23), `8_wb_prep.py` (evaporation to 2026-10-22).
-- **Run order:** 4 → 5 → 8 → 9 → 10 → `scripts/web/` (`data.py` before `whatif.py` and `physics.py`; `10` before `watchlist.py` and `build_stats.py`).
+- **One end date:** `DATA_END` in `scripts/model/common.py` (now 2026-10-24 23:00 UTC) drives the clean data, fold B and the evaporation download; the forecast starts the hour after. Rain is available to the current hour, but EA river flow lags a day.
+- **Run order:** 4 → 5 → 8 → 9 → 10 → 11 → `scripts/web/` (`data.py` before `whatif.py` and `physics.py`; `10` before `watchlist.py` and `build_stats.py`).
 - **`9_wb_fit.py`** fits 52 works × 2 folds on 8 processes, about 5 minutes. Run it in the foreground or as a tracked background job; a bare `&` from a tool shell stalled once. Experiment switches by environment variable: `WB_CAP_Q`, `WB_SAT`, `WB_TANK_H`, `WB_PUMP_H`, `WB_TAU_FAST_MAX`, `WB_OUT`. Ablation outputs: `data/interim/wb_*_abl_*`.
 - **Physics-only outputs are the `wb1_*` columns;** `wb_*` is the dropped learned-threshold version, kept as a diagnostic.
 - **Treated volume is outlet effluent; FFT applies at the inlet.** Hence the 80% screen.

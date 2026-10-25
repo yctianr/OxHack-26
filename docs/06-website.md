@@ -25,16 +25,16 @@ python3 -m http.server 8000 -d web      # then open http://localhost:8000
 | Tab | What it shows | Model |
 | --- | --- | --- |
 | **Inspect works** (default) | The regulator watchlist: works coloured by lead strength; an evidence file per works with findings, treated flow vs permitted flow, lowest-treatment dates, unexplained spill dates, Thames Water's stated reason, estimated spill volume, storm tank, records to request, "Copy case summary" | [04-watchlist.md](04-watchlist.md) |
-| **Spills by day** (`#day`) | A day slider over the test year. Views: *What happened* (monitors), *Physics model* (default), *Statistical backup*, *Statistical forecast*. Card per overflow, top-10 list, a scores table of both models, the physics model's calibration | [02](02-physical-model.md), [03](03-statistical-model.md) |
+| **Spills by day** (`#day`) | A day slider over the test year and the 7-day forecast (opens on today). Views: *What happened* (monitors), *Physics model* (default), *Statistical backup*, *Statistical forecast*. Card per overflow, top-10 list, a scores table of both models, the physics model's calibration | [02](02-physical-model.md), [03](03-statistical-model.md) |
 
 ### `scenario.html`: rain scenarios (light theme)
 
 Layout and controls follow Keira's `UI-first-draft.html`, with the 3D map in place of the 2D sketch.
 
-- **Day slider:** opens on 16 Jan 2026, a storm day in the test year.
+- **Day slider:** the test year, then 7 forecast days marked "forecast"; opens on today. On forecast days the chance comes from the physics model run on every member of the ECMWF ensemble rain forecast; monitors and the statistical model have nothing yet.
 - **River sewage glow toggle**, with counts of overflows likely to spill, unlikely, and recorded by monitors.
 - **Overflow list and card:** chance of a spill (physics model, or the statistical backup where there is no treated-flow data), what the monitor recorded, spill volume and hours, the statistical model's chance, storm tank and its source, and the works' test-year total.
-- **Rainfall slider:** starts at the rain measured at that overflow that day. Moving it reruns that day of the physics model in the browser from the works' start-of-day state (soil, groundwater, storm tank), with the day's hourly rain pattern scaled to the new total. At the measured rain it reproduces the full model (median difference in daily chance 0.000). For overflows on the backup it moves the statistical model's rain store instead.
+- **Rainfall slider:** starts at the rain measured at that overflow that day (on forecast days, the ensemble-mean forecast, with the 1-in-10 high case quoted). Moving it reruns that day of the physics model in the browser from the works' start-of-day state (soil, groundwater, storm tank), with the day's hourly rain pattern scaled to the new total. At the measured rain it reproduces the full model (median difference in daily chance 0.000). For overflows on the backup it moves the statistical model's rain store instead.
 
 ## River glow
 

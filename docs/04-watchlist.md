@@ -1,6 +1,6 @@
 # 04 · Regulator watchlist (decision 1: which works to inspect)
 
-The watchlist screens 53 Thames Water treatment works around Oxford for spills that shouldn't have happened, and ranks them for inspection. Result: **7 strong leads and 12 moderate**; 7 of the leads had no Thames Water investigation in its 2025 return.
+The watchlist screens 53 Thames Water treatment works around Oxford for spills that shouldn't have happened, and ranks them for inspection. Result: **7 strong leads and 14 moderate**; 7 of the leads had no Thames Water investigation in its 2025 return.
 
 Code: `scripts/web/watchlist.py` → `web/watchlist/data.json`, shown on the website's "Inspect works" tab ([06-website.md](06-website.md)).
 
@@ -24,10 +24,10 @@ Test B uses the physics model with spilling only at full capacity, so no spill r
 | Shabbington | strong | 52 of 54 | 22% | 6 | check | none |
 | Horton-cum-Studley | strong | 1 of 50 | 115% | 13 | good | yes |
 | Church Hanborough | strong | 2 of 113 | 104% | 10 | good | yes |
-| Watlington | strong | 9 of 15 | 78% | 1 | check | yes |
+| Watlington | strong | 9 of 15 | 78% | 2 | check | yes |
 | Cholsey | strong | 5 of 12 | 98% | 0 | groundwater-led | none |
 
-Moderate: Combe, Bletchingdon, Chadlington, South Moreton, Bampton, Wheatley, Oxford, Middle Barton, Little Milton, Benson, Haddenham, Grendon Underwood. Totals: 335 all-day spill days under 80% of FFT; 91 unexplained spill days.
+Moderate: Combe, Bletchingdon, Chadlington, Bampton, South Moreton, Wheatley, Oxford, Little Milton, Benson, Middle Barton, Culham, Haddenham, Grendon Underwood, Islip. Totals: 335 all-day spill days under 80% of FFT; 94 unexplained spill days (test years to 24 Oct 2026).
 
 - **Clearest case: Shabbington** (population about 530) treated a median 22% of its permitted 2.8 L/s on 52 of its 54 all-day spill days. Thames Water's own return lists 3.6 L/s as the flow it should treat.
 - **Church Hanborough** is independently supported: Hammond et al. 2021 (its "WWTP1", identified by its 50.52 L/s permitted flow) found it spilling well below its permitted pass-forward flow in 2009–2020.
