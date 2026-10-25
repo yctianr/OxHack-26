@@ -155,6 +155,16 @@ for s in O["sites"]:
     w = PH["works"].get(s["id"])
     x, y = sites.loc[s["id"], ["x", "y"]]
     rec = dict(id=s["id"], name=s["name"], lon=s["lon"], lat=s["lat"], type=s["type"], water=s["water"])
+    # where it enters the river: the closest point on the nearest river link (for the dotted connector on the map)
+    ke, _ = nearest_link(x, y)
+    pe = np.array(links[ke]["pts"], dtype=float)
+    a_, b_ = pe[:-1], pe[1:]
+    ab = b_ - a_
+    tq = np.clip(((x - a_[:, 0]) * ab[:, 0] + (y - a_[:, 1]) * ab[:, 1]) / np.maximum((ab ** 2).sum(1), 1e-9), 0, 1)
+    proj = a_ + tq[:, None] * ab
+    i_ = int(np.argmin(np.hypot(proj[:, 0] - x, proj[:, 1] - y)))
+    elon, elat = t2ll.transform(*proj[i_])
+    rec["entry"] = [round(elon, 5), round(elat, 5)]
     if w:
         r = rate.get(s["id"])
         r = float(r) if r is not None and np.isfinite(r) and r > 0 else ratio * cap[s["id"]] / 86400

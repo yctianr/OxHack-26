@@ -14,8 +14,8 @@
 .tg{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;font:500 13px inherit;font-family:inherit;color:var(--mute);cursor:pointer;display:flex;align-items:center;gap:7px}
 .tg i{width:10px;height:10px;border-radius:50%;background:#cfd8dc}
 .tg[aria-pressed=true]{color:var(--ink);border-color:#c9d3d6}
-.tg[aria-pressed=true].ec i{background:linear-gradient(90deg,#f6d55c,#e4572e)}
-.tg[aria-pressed=true].am i{background:linear-gradient(90deg,#b9a6e8,#5b2a86)}
+.tg[aria-pressed=true].ec i{background:linear-gradient(90deg,#3aa76d,#f2b134,#e4572e)}
+.tg[aria-pressed=true].am i{background:linear-gradient(90deg,#3aa76d,#9b7ad0,#5b2a86)}
 .time{left:50%;transform:translateX(-50%);bottom:18px;width:min(760px,calc(100% - 32px));padding:12px 16px 10px}
 .trow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .date{font-size:16px;font-weight:650;display:inline-block;min-width:150px;text-align:center}
@@ -23,6 +23,7 @@
 .tag{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:8px;vertical-align:2px}
 .tag.past{background:#eef2f3;color:var(--mute)}.tag.fc{background:#e3f1f6;color:var(--accent)}
 .legend{display:flex;gap:14px;font-size:11px;color:var(--mute);flex-wrap:wrap;justify-content:flex-end}
+.legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px #cfd8dc}
 .legend .ramp{display:inline-block;width:64px;height:6px;border-radius:3px;vertical-align:1px;margin:0 5px}
 #day{width:100%;margin:10px 0 2px;accent-color:var(--accent);cursor:pointer}
 .ticks{position:relative;height:14px;font-size:10.5px;color:var(--mute)}
@@ -84,7 +85,7 @@ const fmtE=v=>v>=1e5?(v/1e3).toFixed(0)+',000':Math.round(v).toLocaleString('en-
 const fmtA=v=>v<1?v.toFixed(2):v<10?v.toFixed(1):Math.round(v).toString();
 
 // ---- map (deck.gl: light basemap tiles, rivers, heatmaps, discharge points) ----
-const {Deck,MapView,TileLayer,BitmapLayer,PathLayer,ScatterplotLayer}=deck;
+const {Deck,MapView,TileLayer,BitmapLayer,PathLayer,ScatterplotLayer,PathStyleExtension}=deck;
 const tiles=(id,svc)=>new TileLayer({id,data:`https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/${svc}/MapServer/tile/{z}/{y}/{x}`,
   minZoom:0,maxZoom:16,tileSize:256,renderSubLayers:p=>{const {west,south,east,north}=p.tile.bbox;
     return new BitmapLayer(p,{data:null,image:p.data,bounds:[west,south,east,north]});}});
@@ -95,23 +96,32 @@ function ramp(stops,v){ // stops: [[value, '#hex'],...] on log10(value)
   for(let i=1;i<stops.length;i++){ const [v0,c0]=stops[i-1],[v1,c1]=stops[i], a=Math.log10(v0), b=Math.log10(v1);
     if(x<=b){ const t=Math.max(0,(x-a)/(b-a)), A=hex(c0), B=hex(c1); return A.map((u,k)=>Math.round(u+(B[k]-u)*t)); } }
   return hex(stops.at(-1)[1]); }
-const ES=[[P.ecoli_bg*1.5,'#f9e79f'],[P.swim_ok,'#f6d55c'],[P.swim_bad,'#f39c3d'],[1e4,'#e4572e'],[3e5,'#8e1b3a']];
-const AS=[[P.ammonia_bg*1.5,'#e4ddf5'],[P.fish_ok,'#b9a6e8'],[P.fish_bad,'#8e63c9'],[3,'#5b2a86'],[10,'#2d0f4a']];
-let HOT=[], version=0, hover=null;
+// green where safe; E. coli turns amber then red above the swimming limits, ammonia purple above the fish limits
+const ES=[[P.swim_ok,'#3aa76d'],[P.swim_bad,'#f2b134'],[1e4,'#e4572e'],[3e5,'#8e1b3a']];
+const AS=[[P.fish_ok,'#3aa76d'],[P.fish_bad,'#9b7ad0'],[3,'#5b2a86'],[10,'#2d0f4a']];
+let SEGS=SEG, version=0, hover=null;
 function layers(){
   const v=version;
   return [
     tiles('base','World_Light_Gray_Base'),
     new PathLayer({id:'river',data:SEG,getPath:d=>d.path,getColor:[143,191,214],widthUnits:'pixels',getWidth:d=>d.m?2.2:1,capRounded:true}),
-    new PathLayer({id:'ecoli',data:HOT,visible:showE,getPath:d=>SEG[d].path,getColor:d=>[...ramp(ES,E[d]),E[d]>P.ecoli_bg*1.5?240:0],
-      widthUnits:'pixels',getWidth:showA?8:5,capRounded:true,updateTriggers:{getColor:v,getWidth:showA}}),
-    new PathLayer({id:'ammonia',data:HOT,visible:showA,getPath:d=>SEG[d].path,getColor:d=>[...ramp(AS,A[d]),A[d]>P.ammonia_bg*1.5?240:0],
-      widthUnits:'pixels',getWidth:showE?3:5,capRounded:true,updateTriggers:{getColor:v,getWidth:showE}}),
+    // every river is coloured: green where safe; the polluted stretches drawn on top so they stand out
+    new PathLayer({id:'ecoli',data:SEGS,visible:showE,getPath:d=>d.path,getColor:d=>[...ramp(ES,E[d.j]),235],
+      widthUnits:'pixels',getWidth:d=>(d.m?3.5:1.8)*(showA?1.6:1),capRounded:true,updateTriggers:{getColor:v,getWidth:showA}}),
+    new PathLayer({id:'ammonia',data:SEGS,visible:showA,getPath:d=>d.path,getColor:d=>[...ramp(AS,A[d.j]),235],
+      widthUnits:'pixels',getWidth:d=>(d.m?3.5:1.8)*(showE?0.55:1),capRounded:true,updateTriggers:{getColor:v,getWidth:showE}}),
     new PathLayer({id:'hit',data:SEG,getPath:d=>d.path,getColor:[0,0,0,1],widthUnits:'pixels',getWidth:14,pickable:true}),
     tiles('labels','World_Light_Gray_Reference'),
-    new ScatterplotLayer({id:'pts',data:Q.works,getPosition:w=>[w.lon,w.lat],radiusUnits:'pixels',getRadius:4.5,stroked:true,lineWidthUnits:'pixels',getLineWidth:1.4,
-      getFillColor:w=>!w.seg?[176,188,193]:w.spill[day]?[194,54,47]:[255,255,255],getLineColor:w=>w.seg&&w.spill[day]?[255,255,255]:[55,71,79],
-      pickable:true,updateTriggers:{getFillColor:v,getLineColor:v}})];
+    // dotted connector from each discharge point to where it enters its river
+    new PathLayer({id:'links',data:Q.works,getPath:w=>[[w.lon,w.lat],w.entry],getColor:[38,50,56,190],widthUnits:'pixels',getWidth:1.6,
+      getDashArray:[2,2],dashJustified:true,extensions:[new PathStyleExtension({dash:true})]}),
+    // halo on works spilling that day
+    new ScatterplotLayer({id:'halo',data:Q.works.filter(w=>w.seg&&w.spill[day]),getPosition:w=>[w.lon,w.lat],radiusUnits:'pixels',getRadius:13,
+      getFillColor:[194,54,47,55],updateTriggers:{getPosition:v}}),
+    new ScatterplotLayer({id:'pts',data:Q.works,getPosition:w=>[w.lon,w.lat],radiusUnits:'pixels',getRadius:w=>w.seg&&w.spill[day]?7.5:6.5,
+      stroked:true,lineWidthUnits:'pixels',getLineWidth:2,getLineColor:[255,255,255],
+      getFillColor:w=>!w.seg?[144,164,174]:w.spill[day]?[194,54,47]:[38,50,56],
+      pickable:true,updateTriggers:{getFillColor:v,getRadius:v}})];
 }
 const D3=new Deck({parent:$('map'),views:new MapView({repeat:false}),initialViewState:{longitude:-1.27,latitude:51.73,zoom:10.3,maxZoom:16,minZoom:8},
   controller:{dragRotate:false,touchRotate:false},layers:[],onHover:onHover,getCursor:({isHovering})=>isHovering?'crosshair':'grab'});
@@ -120,13 +130,13 @@ function render(){
   compute(day);
   const now=new Set();
   for(const w of Q.works) if(w.seg&&w.spill[day]) for(const j of w.seg) now.add(j);
-  HOT=[...now]; version++;
+  SEGS=[...SEG.filter(d=>!now.has(d.j)),...[...now].map(j=>SEG[j])]; version++;   // polluted stretches last = on top
   D3.setProps({layers:layers()});
   const fc=day>=NOBS;
   $('date').textContent=new Date(D[day]+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   $('tag').className='tag '+(fc?'fc':'past'); $('tag').textContent=fc?(day===NOBS?'Today · forecast':'Forecast'):'Past';
-  $('legend').innerHTML=(showE?`<span>E. coli<span class="ramp" style="background:linear-gradient(90deg,#f6d55c,#f39c3d,#e4572e,#8e1b3a)"></span>${P.swim_ok}+ /100 mL</span>`:'')+
-    (showA?`<span>Ammonia<span class="ramp" style="background:linear-gradient(90deg,#b9a6e8,#8e63c9,#5b2a86)"></span>${P.fish_ok}+ mg/L</span>`:'');
+  $('legend').innerHTML=`<span><i class="dot" style="background:#c2362f"></i>spilling <i class="dot" style="background:#263238;margin-left:6px"></i>not spilling</span>`+(showE?`<span>E. coli<span class="ramp" style="background:linear-gradient(90deg,#3aa76d 0 30%,#f2b134 45%,#e4572e 70%,#8e1b3a)"></span>unsafe over ${P.swim_bad.toLocaleString('en-GB')}/100 mL</span>`:'')+
+    (showA?`<span>Ammonia<span class="ramp" style="background:linear-gradient(90deg,#3aa76d 0 30%,#9b7ad0 45%,#5b2a86 75%,#2d0f4a)"></span>harmful over ${P.fish_bad} mg/L</span>`:'');
   if(hover) onHover(hover);
 }
 
