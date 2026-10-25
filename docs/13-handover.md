@@ -1,6 +1,6 @@
 # 13 · Handover — Spillcast (OxHack 2026)
 
-Written Sun 25 Oct 2026, 01:25 BST (replaces the Sat 23:00 version). **Deadline: Sun 25 Oct, 16:00 GMT.** Clocks go back at 02:00 tonight, so 16:00 GMT is 16:00 on the clock. **Code freeze 14:00, submit 15:30.**
+Written Sun 25 Oct 2026, 01:25 BST, updated 01:40 (replaces the Sat 23:00 version). **Deadline: Sun 25 Oct, 16:00 GMT.** Clocks go back at 02:00 tonight, so 16:00 GMT is 16:00 on the clock. **Code freeze 14:00, submit 15:30.**
 
 ## What we're building
 
@@ -140,7 +140,8 @@ The "check" works often report spilling while treating well below capacity.
 
 - **HRT prompt wording and judging criteria:** does it name a decision-maker? Does submission need a public repo?
 - **ORIC capacity sheet licence:** still not checked. The site shows FFT figures from it. Check before publicising widely.
-- **Teammates' work on `main`:** `UI-first-draft.html` and `Documentation.txt` (Keira), `tdv_datasets/` and `edm_datasets/` (Rain). Does any of it belong in the site?
+- **One story for the pitch.** Rain's README line (01:30) frames the project as predicting how sewage spreads and concentrates in rivers and deciding where to improve the sewage system; this handover and the website lead with the inspector watchlist. Agree one framing before the write-up. They fit together: the watchlist is decision 1, harm and spread is decision 2.
+- **Teammates' work on `main`:** `UI-first-draft.html` and `docs/Documentation.txt` (Keira), `tdv_datasets/` and `edm_datasets/` (Rain), `Rainfall Data/` (Vincent, 01:20: daily qualified rainfall for Abingdon, Eynsham, Osney Lock and Wheatley). Does any of it belong in the site? The models use the EA 15-minute gauges from `1_fetch_gauges.py`, so the daily files would serve as a cross-check, not an input. Two `.DS_Store` files were committed with the rainfall data; harmless, but add `.DS_Store` to `.gitignore`.
 - **Site list:** `docs/10-list-of-discharge-points` names ~22 overflows; the watchlist covers 53 works.
 
 ## Gotchas found the hard way
