@@ -4,7 +4,7 @@ The river page (`web/river.html`) estimates **E. coli** and **ammonia** every 10
 
 Code: `scripts/web/quality.py` → `web/data/quality.json`; the page does the arithmetic for the chosen day.
 
-In the page's **My scenario** mode the spill days and rates come from the physics model rerun in the browser (`web/data/physics.json`) with your rainfall, storm-tank and capacity changes: a works counts as spilling at a 50%+ chance, at its modelled volume ÷ spill-hours.
+In the page's **What if** mode the spill days and rates come from the physics model rerun in the browser (`web/data/physics.json`) with your rainfall, storm-tank and capacity changes: a works counts as spilling at a 50%+ chance, at its modelled volume ÷ spill-hours.
 
 ## Method
 
