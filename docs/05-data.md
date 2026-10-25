@@ -109,7 +109,7 @@ Everything here is exactly as downloaded, in `data/raw/`.
 | **What it is** | Total volume treated per day (m³) at every Thames Water sewage works treating over 50 m³/day ("TDV", total daily volume). This is what was **treated**, measured at the outlet, not what spilled |
 | **Source** | Thames Water storm discharge and flow data page (Excel, one file per year), downloaded by hand |
 | **Files** | `tdv/tdv2019.xlsx` … `tdv2025.xlsx` (277–299 works per year; 2026 not yet published) |
-| **Used for** | The water balance is fitted to it (2019–2025). The watchlist compares it with each works' permitted flow on all-day spill days (Apr 2022 → Dec 2025). The website uses the 2024 mean as each works' size when weighting the river glow. Oxford STW's spill-volume estimate (`7_volume_oxford.py`) |
+| **Used for** | The water balance is fitted to it (2019–2025). The watchlist compares it with each works' permitted flow on all-day spill days (Apr 2022 → Dec 2025). The website uses the 2024 mean as each works' size when weighting the river glow. |
 | **Watch out for** | Column names change between years (e.g. `ABINGDON STW2` vs `ABINGDON STW (2)`; Abingdon has two outlets, which we sum). "Suspect" values are marked only by cell colour. Some meters log runs of zeros or impossible spikes (Carterton: 28 million m³ in a day) |
 
 ### 1.7 Permitted flow (FFT) and capacity: *how much each works should treat*
@@ -172,18 +172,6 @@ The physics model needs each works' storm-tank volume. No dataset gives it in bu
 | Early single-gauge downloads (Osney daily rain, Oxford and Horspath boreholes, Cherwell / Kings Mill / Osney / Sandford levels) | `hydro_*.csv` | First exploration; the borehole turned out to be the weakest signal |
 | Oxford-only alerts | `thames_alerts_oxford.csv` | First exploration; superseded by the full download |
 | LIDAR at 100 m | `oxford_dtm_100m.tif` | Superseded by the 20 m file |
-
-### 1.12 Teammates' datasets in git (not read by the pipeline)
-
-These are committed in the repo, outside `data/`, with their own cleaning scripts. Nothing in `scripts/model/` or `scripts/web/` reads them, so they serve as cross-checks, not inputs.
-
-| Folder | What it is | Cleaning script |
-| --- | --- | --- |
-| `edm_datasets/` | EA annual EDM returns for all companies, 2020–2025, and an Oxford extract (`oxford/`) | `scripts/clean_edm.py` |
-| `tdv_datasets/` | The same Thames Water TDV files as 1.6 (`raw/`), and an Oxford extract with meter-fault flags (`oxford/`) | `scripts/clean_tdv.py` |
-| `Rainfall Data/` | Daily qualified rainfall at Abingdon, Eynsham, Osney Lock and Wheatley | none |
-
-Their file names differ from what our scripts expect (`data/raw/tdv/tdv{YEAR}.xlsx`, and `data/raw/annual_returns/tw_edm_{YEAR}.xlsx`, a Thames Water-only sheet), so copying them across needs renaming. The daily rainfall comes from the same EA gauges as 1.4, which we use at 15 minutes.
 
 ---
 
@@ -263,7 +251,7 @@ All in `data/interim/` (not in git).
 | `wb_*_abl_*` | Ablation runs (capacity quantile, wet-ground runoff, tank size, pump-back) | `9_wb_fit.py` with `WB_*` switches |
 | `web_links.pkl`, `web_elev.npy`, `web_grid.json` | River links in the map box; blended terrain grid | `scripts/web/rivers.py`, `terrain.py` |
 
-Other files in `data/interim/` (`inputs_hourly.pkl`, `labels_hourly*.pkl`, `exp_*.pkl`, `oxford_*.csv`, `multisite.csv`, `out_*.pkl`) come from the archived first-pass scripts in `scripts/archive/`. They use the uncleaned data and can be deleted.
+Other files in `data/interim/` (`inputs_hourly.pkl`, `labels_hourly*.pkl`, `exp_*.pkl`, `oxford_*.csv`, `multisite.csv`, `out_*.pkl`) come from the first-pass scripts (since removed). They use the uncleaned data and can be deleted.
 
 ### 3.4 Website data (`web/`, **in git**)
 

@@ -8,7 +8,7 @@ The statistical model is Spillcast's **backup**. The [physics water balance](02-
 
 It predicts spill days slightly better than physics (skill 0.58 vs 0.47 in the latest test year) because it is fitted to spill records. That same fact makes it the wrong tool for judging whether a works spills when it shouldn't: it learns each works' habits, including bad ones.
 
-Code: `scripts/model/1–7`, shared code in `common.py`. Full audit history: [archive/11-system-review.md](archive/11-system-review.md).
+Code: `scripts/model/1–6`, shared code in `common.py`. Full audit history: `docs/archive/11-system-review.md` in git history (commit 2920dab).
 
 ## Structure
 
@@ -72,4 +72,4 @@ Each fit in plain units: the Farmoor flow that triggers a spill with no rain, th
 
 ## Corrected earlier claims
 
-Earlier figures (archive/10) used same-day rain in "forecasts", flow that saw 9 h ahead, and an unmatched gradient-boosting comparison. The numbers above replace them. The Oxford-only volume model (`7_volume_oxford.py`) is superseded by the physics model's volumes.
+Earlier figures (v2 plan, now removed) used same-day rain in "forecasts", flow that saw 9 h ahead, and an unmatched gradient-boosting comparison. The numbers above replace them. The Oxford-only volume model (`7_volume_oxford.py`, removed) is superseded by the physics model's volumes.

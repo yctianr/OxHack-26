@@ -356,6 +356,9 @@ function setMode(s_){ scenario=s_; $('m-real').setAttribute('aria-pressed',Strin
   $('rainrow').hidden=!s_; $('hint').textContent=s_?'Change the rain, or click a works to change it.':"Hover over a river to see if it's safe.";
   if(!s_){ picked=-1; $('card').hidden=true; } render(); }
 $('m-real').onclick=()=>setMode(false); $('m-scn').onclick=()=>setMode(true);
+// rain slider runs to the wettest day in the data (any gauge), rounded up to 5 mm
+const RAINMAX=Math.ceil(Math.max(...DRV.rain.flatMap(g=>g.map(d=>d.reduce((a,x)=>a+x,0))))/5)*5;
+$('rain').max=String(RAINMAX);
 function meanRain(){ const r=Q.works.map((w,i)=>PW[i]?rainDay(PW[i],day).reduce((a,x)=>a+x,0):null).filter(x=>x!=null); return r.reduce((a,x)=>a+x,0)/r.length; }
 function paintRain(){ const asFell=rainSet==null, m=meanRain();
   $('rain').value=String(asFell?Math.round(m*2)/2:rainSet);

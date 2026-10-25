@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Spillcast · Rain scenarios</title>
 <meta name="description" content="Pick a day and change the rain at one overflow: the 3D map shows how the chance of a sewage spill, and the sewage pressure downstream, responds.">
 <style>
-/* Layout and controls follow Keira's UI-first-draft.html; the map is a 3D deck.gl map. */
+/* Layout and controls follow Keira's first 2D UI draft; the map is a 3D deck.gl map. */
 :root{color-scheme:light;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#21392e;background:#f8faf8}*{box-sizing:border-box}body{margin:0;padding:16px}
 .app{max-width:1280px;margin:auto;border:1px solid #d8e2da;border-radius:16px;background:#fff;overflow:hidden}
 .header,.controls{padding:16px 20px;border-bottom:1px solid #d8e2da;display:flex;justify-content:space-between;align-items:center;gap:20px}
@@ -100,7 +100,7 @@ button:focus-visible,input:focus-visible{outline:2px solid #247e65;outline-offse
         <div style="display:flex;justify-content:space-between"><strong>Rainfall scenario</strong><b id="rain-mm">–</b></div>
         <div class="sub" id="rain-sub">24-hour rainfall at this overflow</div>
         <input id="rain" type="range" min="0" max="100" step="0.1" value="0" aria-label="Rainfall at the selected overflow, in millimetres">
-        <div class="ticks"><span>0 mm</span><span>25</span><span>50</span><span>75</span><span>100 mm</span></div>
+        <div class="ticks" id="rainticks"></div>
         <button id="reset" class="reset" style="margin-top:8px">Reset to the rain that fell</button>
         <p id="explanation" class="small"></p>
       </div>
@@ -122,6 +122,10 @@ const [O,RV,WF,VF]=await Promise.all(['data/outfalls.json','data/rivers.json','d
 // days: the observed test year, then the physics model's 7-day forecast (physics.json) when one was built
 const DATES=VF.dates||O.dates, NOBS=O.dates.length, FC=VF.forecast, SITES=O.sites, WI=WF.sites;
 const isFc=d=>d>=NOBS;
+// rain slider runs to the wettest day in the data (any gauge), rounded up to 5 mm
+const RAINMAX=Math.ceil(Math.max(...VF.drivers.rain.flatMap(g=>g.map(d=>d.reduce((a,x)=>a+x,0))))/5)*5;
+$('rain').max=String(RAINMAX);
+$('rainticks').innerHTML=[0,1,2,3,4].map(k=>`<span>${Math.round(RAINMAX*k/4)}${k===0||k===4?' mm':''}</span>`).join('');
 const $=id=>document.getElementById(id);
 let day=FC?FC.start:DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;   // opens on today's forecast
 let sel=-1, heatOn=true, is3d=true, rainOverride=null;   // rainOverride: mm at the selected overflow, this day only

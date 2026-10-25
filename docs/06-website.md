@@ -22,7 +22,7 @@ python3 -m http.server 8000 -d web      # then open http://localhost:8000/scenar
 
 ### `scenario.html`: rain scenarios (light theme)
 
-Layout and controls follow Keira's `UI-first-draft.html`, with the 3D map in place of the 2D sketch.
+Layout and controls follow Keira's first 2D UI draft, with the 3D map in place of the 2D sketch.
 
 - **Day slider:** the test year, then 7 forecast days marked "forecast"; opens on today. On forecast days the chance comes from the physics model run on every member of the ECMWF ensemble rain forecast; monitors and the statistical model have nothing yet.
 - **River sewage glow toggle**, with counts of overflows likely to spill, unlikely, and recorded by monitors.

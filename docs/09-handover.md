@@ -23,7 +23,7 @@ Updated Sun 25 Oct 2026, ~10:00 GMT. **Code freeze 14:00, submit 15:30, deadline
 | --- | --- |
 | Now | **Host the site.** Drag `web/` onto <https://app.netlify.com/drop>, rename to `spillcast.netlify.app`. Check the two licence questions below first. |
 | Before hosting | **Refresh the forecast** if time has passed since 10:45 UTC: README, "Refresh the forecast" (about 25 minutes).
-| Before 13:30 | **Harm ranking (decision 2).** The physics model's spill volume ÷ river flow that day (EA gauges) × sensitivity (SSSI/SAC, chalk streams, Oxford Meadows SAC). Notes and cost figures: [archive/05-decisions-and-costs.md](archive/05-decisions-and-costs.md). Check first whether EA water-quality samples near the outfalls can validate it. |
+| Before 13:30 | **Harm ranking (decision 2).** The physics model's spill volume ÷ river flow that day (EA gauges) × sensitivity (SSSI/SAC, chalk streams, Oxford Meadows SAC). Notes and cost figures: `docs/archive/05-decisions-and-costs.md` in git history (commit 2920dab). Check first whether EA water-quality samples near the outfalls can validate it. |
 | 14:00 | **Code freeze** |
 | 14:00–15:30 | Write-up and 2-minute video: the inspector's decision → the physics → the evidence → honest limits |
 
@@ -50,7 +50,7 @@ Updated Sun 25 Oct 2026, ~10:00 GMT. **Code freeze 14:00, submit 15:30, deadline
 ## Gotchas
 
 - **Setup:** system Python has no pandas. `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`. Run every script from the repo root.
-- **Data isn't in git** (~460 MB). Rebuild with the README; hand-download list in [05-data.md](05-data.md#rebuilding-the-data). Rain's `tdv_datasets/` and `edm_datasets/` use different file names from what the scripts expect.
+- **Data isn't in git** (~460 MB). Rebuild with the README; hand-download list in [05-data.md](05-data.md#rebuilding-the-data).
 - **One end date:** `DATA_END` in `scripts/model/common.py` (now 2026-10-24 23:00 UTC) drives the clean data, fold B and the evaporation download; the forecast starts the hour after. Rain is available to the current hour, but EA river flow lags a day.
 - **Run order:** 4 → 5 → 8 → 9 → 10 → 11 → `scripts/web/` (`data.py` before `whatif.py` and `physics.py`; `10` before `watchlist.py` and `build_stats.py`).
 - **`9_wb_fit.py`** fits 52 works × 2 folds on 8 processes, about 5 minutes. Run it in the foreground or as a tracked background job; a bare `&` from a tool shell stalled once. Experiment switches by environment variable: `WB_CAP_Q`, `WB_SAT`, `WB_TANK_H`, `WB_PUMP_H`, `WB_TAU_FAST_MAX`, `WB_OUT`. Ablation outputs: `data/interim/wb_*_abl_*`.

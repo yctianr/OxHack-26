@@ -26,17 +26,14 @@ More: [docs/06-website.md](docs/06-website.md).
 
 ```
 docs/                 01 overview · 02 physical model (main) · 03 statistical model (backup) · 04 watchlist
-                      05 data · 06 website · 07 Oxford context · 08 prior work · 09 handover · sources · archive/
-scripts/model/        1–7 data, cleaning and the statistical model; 8–10 and wb.py the physics water balance;
+                      05 data · 06 website · 07 Oxford context · 08 prior work · 09 handover · 10 water quality
+                      sources · model-equations.html
+scripts/model/        1–6 data, cleaning and the statistical model; 8–11 and wb.py the physics water balance and forecast;
                       tanks.csv sourced storm-tank volumes; common.py shared code
 scripts/web/          builds web/data/*.json and web/watchlist/data.json (order in scripts/web/README.md)
 scripts/fetch_data.py Thames Water alerts and status, EA Hydrology, EA LIDAR (stdlib only)
-scripts/archive/      pre-audit exploration (superseded)
-web/                  the website (static): scenario.html and pre-built data
-UI-first-draft.html   Keira's 2D design that scenario.html follows
-prototype/            early dummy-data UI prototype
-edm_datasets/, tdv_datasets/, Rainfall Data/   teammates' downloads and cleaning (cross-checks; the pipeline doesn't read them)
-data/raw/, data/interim/                        fetched and cleaned data (git-ignored, ~460 MB)
+web/                  the website (static): scenario.html, river.html and pre-built data
+data/raw/, data/interim/   fetched and cleaned data (git-ignored, ~460 MB)
 ```
 
 ## Rebuild everything
