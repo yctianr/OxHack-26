@@ -31,9 +31,10 @@
 .legend .ramp{display:inline-block;width:64px;height:6px;border-radius:3px;vertical-align:1px;margin:0 5px}
 #hist{display:block;width:100%;height:30px;margin-top:10px}
 #day{width:100%;margin:2px 0 2px;cursor:pointer;-webkit-appearance:none;appearance:none;background:transparent;height:16px}
-#day::-webkit-slider-runnable-track{height:4px;background:rgba(110,122,128,.25);border-radius:2px}
+#day::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(110,122,128,.25) 0 var(--t,100%),rgba(31,111,139,.55) var(--t,100%) 100%)}
 #day::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-5px;border-radius:50%;background:#5f6b70;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
-#day::-moz-range-track{height:4px;background:rgba(110,122,128,.25);border-radius:2px}
+#day::-moz-range-track{height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(110,122,128,.25) 0 var(--t,100%),rgba(31,111,139,.55) var(--t,100%) 100%)}
+.slwrap{position:relative}
 #day::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#5f6b70;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
 #day:focus-visible{outline:2px solid #9aa7ab;outline-offset:2px;border-radius:4px}
 .ticks{position:relative;height:14px;font-size:10.5px;color:var(--mute)}
@@ -112,7 +113,7 @@
   <div class="trow"><div><button class="play" id="play" aria-pressed="false" aria-label="Play through the days">▶</button><button class="step" id="prev" aria-label="Previous day">‹</button><span class="date" id="date">–</span><button class="step" id="next" aria-label="Next day">›</button><span class="tag" id="tag"></span></div>
     <div class="legend" id="legend"></div></div>
   <canvas id="hist" aria-hidden="true"></canvas>
-  <input id="day" type="range" min="0" max="0" value="0" aria-label="Day">
+  <div class="slwrap"><input id="day" type="range" min="0" max="0" value="0" aria-label="Day"></div>
   <div class="ticks" id="ticks"></div>
   <div class="rainrow" id="rainrow" hidden><span>Rain</span><input id="rain" type="range" min="0" max="80" step="0.5" value="0" aria-label="Rainfall that day, everywhere, mm">
     <b id="rainlab"></b><button class="link" id="rainreset">Actual</button><button class="link" id="resetall">Reset</button></div>
@@ -256,8 +257,8 @@ function render(){
   $('tag').className='tag '+(fc||scenario?'fc':'past'); $('tag').textContent=scenario?'What if':fc?(day===NOBS?'Today':'Forecast'):'Past';
   if(scenario) paintRain(); if(picked>=0) paintCard();
   paintSide(); paintAvoid(); drawHist();
-  $('legend').innerHTML=`<span><i class="dot" style="background:#c2362f"></i>spilling <i class="dot" style="background:#263238;margin-left:6px"></i>not spilling</span>`+(showE||showA?`<span><i class="line"></i>not assessed</span>`:'')+(showE?`<span>E. coli<span class="ramp" style="background:linear-gradient(90deg,#3aa76d 0 30%,#f2b134 45%,#e4572e 70%,#8e1b3a)"></span>unsafe ${P.swim_bad}+</span>`:'')+
-    (showA?`<span>Ammonia<span class="ramp" style="background:linear-gradient(90deg,#3aa76d 0 30%,#9b7ad0 45%,#5b2a86 75%,#2d0f4a)"></span>harmful ${P.fish_bad}+ mg/L</span>`:'');
+  $('legend').innerHTML=`<span><i class="dot" style="background:#c2362f"></i>spilling <i class="dot" style="background:#263238;margin-left:6px"></i>not spilling</span>`+(showE||showA?`<span><i class="line"></i>not assessed</span>`:'')+(showE?`<span>E. coli<span class="ramp" style="background:linear-gradient(90deg,#3aa76d 0 30%,#f2b134 45%,#e4572e 70%,#8e1b3a)"></span>unsafe ${P.swim_bad}+ cfu/100 mL</span>`:'')+
+    (showA?`<span>Ammonia<span class="ramp" style="background:linear-gradient(90deg,#3aa76d 0 30%,#9b7ad0 45%,#5b2a86 75%,#2d0f4a)"></span>harmful ${P.fish_bad}+ mg N/L</span>`:'');
   if(hover) onHover(hover);
 }
 
@@ -277,8 +278,8 @@ function onHover(info){
     const j=info.object.j, nm=Q.names[Q.seg.name[j]]||'Unnamed stream', [ce,te]=verdictE(E[j]), [ca,ta]=verdictA(A[j]);
     if(!ASSESSED.has(j)) tip.innerHTML=`<h3>${nm}</h3><div>Not assessed</div><div class="note">No sewage works upstream.</div>`;
     else tip.innerHTML=`<h3>${nm}</h3>
-      <div class="row"><span>E. coli</span><span class="v">${fmtE(E[j])} <small>/100 mL</small></span></div><span class="chip ${ce}">${te}</span>
-      <div class="row"><span>Ammonia</span><span class="v">${fmtA(A[j])} <small>mg/L</small></span></div><span class="chip ${ca}">${ta}</span>`;
+      <div class="row"><span>E. coli</span><span class="v">${fmtE(E[j])} <small>cfu/100 mL</small></span></div><span class="chip ${ce}">${te}</span>
+      <div class="row"><span>Ammonia</span><span class="v">${fmtA(A[j])} <small>mg N/L</small></span></div><span class="chip ${ca}">${ta}</span>`;
   }
   tip.style.display='block';
   const pad=14, r=tip.getBoundingClientRect(); let x=info.x+pad, y=info.y+pad;
@@ -292,10 +293,11 @@ function drawHist(){
   const cv=$('hist'), r=cv.getBoundingClientRect(), dpr=devicePixelRatio||1; if(!r.width) return;
   cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
   const g=cv.getContext('2d'); g.scale(dpr,dpr); g.clearRect(0,0,r.width,r.height);
-  const pad=7, bw=(r.width-2*pad)/D.length;   // 7 px = half the slider thumb, so bars line up with the handle
+  const pad=7, span=r.width-2*pad, bw=span/(D.length-1), X=d=>pad+span*d/(D.length-1);   // where the slider handle sits for day d
+  if(NOBS<D.length){ g.fillStyle='rgba(31,111,139,.10)'; g.fillRect(X(NOBS-0.5),0,r.width-X(NOBS-0.5),r.height); }   // forecast days
   SPILLN.forEach((n,d)=>{ if(!n&&d!==day) return; const h=Math.max(d===day?2:1,n/SPILLMAX*(r.height-2));
     g.fillStyle=d===day?'#263238':d>=NOBS?'rgba(31,111,139,.45)':'rgba(110,122,128,.45)';
-    g.fillRect(pad+d*bw,r.height-h,Math.max(1,bw-0.4),h); });
+    g.fillRect(X(d)-bw/2,r.height-h,Math.max(1,bw-0.4),h); });
 }
 addEventListener('resize',drawHist);
 
@@ -417,7 +419,10 @@ tg('tg-e',()=>showE,v=>showE=v); tg('tg-a',()=>showA,v=>showA=v); tg('tg-v',()=>
 const pct=i=>(i/(D.length-1)*100).toFixed(2)+'%', mon=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{month:'short'});
 let ticks=`<span class="l" style="left:0">${mon(D[0])} ${D[0].slice(0,4)}</span>`;
 D.forEach((d,i)=>{ if(i>0&&d.slice(8)==='01'&&['01','04','07'].includes(d.slice(5,7))) ticks+=`<span style="left:${pct(i)}">${mon(d)}</span>`; });
-if(NOBS<D.length) ticks+=`<span class="today r" style="left:100%">Today</span>`;
+if(NOBS<D.length){ // today: a mark on the track; the forecast part of the track is tinted blue
+  const tf=(NOBS-0.5)/(D.length-1);   // boundary between the last recorded day and today, in handle coordinates
+  sl.style.setProperty('--t',`calc(7px + (100% - 14px) * ${tf.toFixed(5)})`);
+  ticks+=`<span class="today r" style="left:calc(7px + (100% - 14px) * ${tf.toFixed(4)} - 3px)">Today</span>`; }
 $('ticks').innerHTML=ticks;
 })().catch(e=>{ document.getElementById('loading').textContent='Could not load: '+e.message; console.error(e); });
 </script>
