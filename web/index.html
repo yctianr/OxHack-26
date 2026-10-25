@@ -1,0 +1,569 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style>
+<title>Spillcast Oxford</title>
+<meta name="description" content="Which sewage works around Oxford should be inspected first: spills while treatment ran below its permit, and spills the weather doesn't explain.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-height map with a docked instrument panel on the right (stacks below on phones); a time rail along the map's foot in the daily view. */
+:root{
+  color-scheme:dark;
+  --ground:#0b1315;       /* page / night ground */
+  --panel:#111b1e;        /* panel surface */
+  --line:#22313a;         /* hairlines */
+  --ink:#e6ece9;          /* primary text */
+  --mute:#8fa3a3;         /* secondary text */
+  --river:#5fb7cf;        /* clean river */
+  --sewage:#f0a33a;       /* sewage glow, moderate lead */
+  --hot:#ff5d4a;          /* high pressure, strong lead */
+  --ok:#5fcf9a;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --ui:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--ui);font-size:14px;line-height:1.45;overflow:hidden}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;height:100%}
+.mapwrap{position:relative;min-width:0;min-height:0;background:radial-gradient(ellipse at 50% 40%,#132226 0%,var(--ground) 70%)}
+#map{position:absolute;inset:0}
+.panel{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding-block:18px 28px;padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px;min-width:0}
+.tab{display:flex;flex-direction:column;gap:22px;min-width:0}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand h1{font-family:var(--display);font-weight:500;font-size:28px;letter-spacing:-0.01em;margin:0}
+.brand span{color:var(--mute);font-size:12px}
+.eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin:0 0 8px}
+.date{font-family:var(--display);font-size:22px;margin:0}
+.question{font-family:var(--display);font-weight:500;font-size:23px;line-height:1.2;margin:0 0 6px;text-wrap:balance}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{background:transparent;border:0;color:var(--mute);font:500 12px var(--ui);padding:6px 11px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#1d2c31;color:var(--ink)}
+.tabs{display:flex;width:100%}
+.tabs button{flex:1;font-size:13px;padding:8px 10px}
+.seg button:focus-visible,.btn:focus-visible,.row:focus-visible{outline:2px solid var(--river);outline-offset:-2px}
+.modehelp{color:var(--mute);font-size:12px;margin:8px 0 0}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font:500 24px var(--mono);font-variant-numeric:tabular-nums}
+.kpi small{color:var(--mute);font-size:12px}
+.card h2{font-family:var(--display);font-weight:500;font-size:20px;margin:0 0 4px;text-wrap:balance}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+.chip{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+.chip.gw{border-color:#2f5d6b;color:var(--river)}
+.chip.on{border-color:#6b4a1f;color:var(--sewage)}
+.pill{display:inline-block;font:500 10.5px var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.pill.strong{color:#ffd2c9;background:#5a2219}
+.pill.moderate{color:#ffe2b0;background:#4d3612}
+.pill.low,.pill.insufficient,.pill.none{color:var(--mute);background:#1d2c31}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:10px 0 0}
+.facts div{display:flex;flex-direction:column;min-width:0}
+.facts span{color:var(--mute);font-size:11px}
+.facts b{font:500 15px var(--mono);font-variant-numeric:tabular-nums}
+.facts.text b{font:500 13px var(--ui);overflow-wrap:anywhere}
+.finding{margin:8px 0 0;font-size:14px;line-height:1.45}
+.finding b{color:var(--ink);font-weight:600}
+.route{margin:10px 0 0;font-size:12px;color:var(--mute)}
+.route b{color:var(--river);font-weight:500}
+.chartbox{position:relative;height:150px;margin-top:12px}
+.chartbox.tall{height:190px}
+.legend2{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--mute);margin:8px 0 0;padding:0;list-style:none}
+.legend2 i{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:5px}
+.legend2 i.bar{width:8px;height:8px;border-radius:2px}
+.dates{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font:12px var(--mono);margin:6px 0 0;padding:0;list-style:none}
+.dates span{color:var(--mute)}
+h3{font:600 13px var(--ui);margin:14px 0 0}
+.ask{margin:6px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink);display:flex;flex-direction:column;gap:3px}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.status{font-size:12px;color:var(--mute)}
+#copytext{width:100%;box-sizing:border-box;min-height:110px;font:11px var(--mono);border:1px solid var(--line);border-radius:7px;background:var(--ground);color:var(--ink);padding:8px;margin-top:8px}
+.list{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:1fr 64px 46px;gap:8px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;color:var(--ink);font:inherit;text-align:left}
+.row.wl{grid-template-columns:minmax(0,1fr) auto 52px}
+.row:hover{background:#16242a}
+.row[aria-current="true"]{background:#1a2a30}
+.row .bar{height:6px;border-radius:3px;background:#1d2c31;overflow:hidden}
+.row .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sewage),var(--hot))}
+.row .v{font:500 12px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.row small{display:block;color:var(--mute);font-size:11px}
+.listhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.listhead .eyebrow{margin:0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:right;font-weight:400;font-variant-numeric:tabular-nums}
+th{color:var(--mute)}
+td:first-child,th:first-child{text-align:left}
+td.me{color:var(--sewage)}
+.note{color:var(--mute);font-size:12px;margin:8px 0 0;max-width:62ch}
+.note b{color:var(--ink);font-weight:500}
+.note a{color:var(--river)}
+.legend{position:absolute;left:max(14px,env(safe-area-inset-left,0px));top:14px;background:rgba(11,19,21,.82);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--mute);display:flex;flex-direction:column;gap:6px;max-width:250px;backdrop-filter:blur(6px)}
+.legend .ramp{height:8px;border-radius:4px;background:linear-gradient(90deg,#3c8ea6,#f0a33a,#ff5d4a)}
+.legend .ends{display:flex;justify-content:space-between}
+.legend .keys{display:flex;gap:10px;flex-wrap:wrap}
+.legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.cams{position:absolute;right:14px;top:14px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:60%}
+.btn{background:rgba(17,27,30,.88);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 10px;font:500 12px var(--ui);cursor:pointer;backdrop-filter:blur(6px)}
+.btn:hover{border-color:#3a525c}
+.btn.solid{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.rail{position:absolute;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;background:linear-gradient(0deg,rgba(11,19,21,.95),rgba(11,19,21,0))}
+.rail input[type=range]{width:100%;accent-color:var(--sewage)}
+.rail .d{font:500 12px var(--mono);color:var(--ink);min-width:92px;text-align:right}
+#spark{position:absolute;left:96px;bottom:40px;width:calc(100% - 222px);height:26px;pointer-events:none;opacity:.9}
+.tip{font:12px var(--ui);line-height:1.4}
+.tip b{font-weight:600}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);font-size:13px;pointer-events:none}
+@media (max-width:820px){
+  body{overflow:auto}
+  .app{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
+  .panel{border-left:0;border-top:1px solid var(--line);overflow:visible;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .legend{display:none}
+  .cams{left:12px;right:12px;max-width:none;justify-content:flex-start}
+  #spark{left:92px;width:calc(100% - 210px)}
+}
+@media (prefers-reduced-motion:reduce){.btn,.row{transition:none}}
+</style></head><body>
+
+<div class="app">
+  <div class="mapwrap">
+    <div id="map" aria-label="3D map of sewage works, overflows and rivers around Oxford"></div>
+    <div class="loading" id="loading">Loading terrain and rivers…</div>
+    <div class="legend" id="legend"></div>
+    <div class="cams" role="group" aria-label="Camera">
+      <button class="btn" id="cam-all">Whole area</button>
+      <button class="btn" id="cam-city">Oxford</button>
+      <button class="btn" id="cam-pm">Port Meadow</button>
+      <button class="btn" id="cam-sand">Sandford</button>
+      <button class="btn" id="tog3d" aria-pressed="true">2D</button>
+    </div>
+    <canvas id="spark" aria-hidden="true"></canvas>
+    <div class="rail" id="rail">
+      <button class="btn" id="play" aria-label="Play through days">▶ Play</button>
+      <input type="range" id="day" min="0" max="386" value="0" aria-label="Day">
+      <span class="d" id="dlab"></span>
+    </div>
+  </div>
+
+  <aside class="panel" id="panel">
+    <div class="brand"><h1>Spillcast</h1><span>Sewage overflows · 25 km around Oxford</span></div>
+    <div class="seg tabs" role="group" aria-label="View">
+      <button id="t-inspect" aria-pressed="true">Inspect works</button>
+      <button id="t-day" aria-pressed="false">Spills by day</button>
+    </div>
+
+    <!-- ===== Inspect: regulator watchlist ===== -->
+    <div class="tab" id="tab-inspect">
+      <section>
+        <p class="eyebrow">For inspectors</p>
+        <p class="question">Which sewage works should be inspected first?</p>
+        <p class="note">Overflows may only spill once a works is treating its full permitted flow. We screen 53 Thames Water works for spills while treatment ran well below the permit, and spills the weather doesn't explain, so inspections reach avoidable discharges into rivers and wildlife habitats first.</p>
+      </section>
+      <section class="kpis" id="wlKpis"></section>
+
+      <section class="card" id="wlFile">
+        <p class="eyebrow" id="wfKicker"></p>
+        <h2 id="wfName">–</h2>
+        <div id="wfFind"></div>
+        <p class="route" id="wfRoute"></p>
+        <div style="margin-top:12px" class="seg" role="group" aria-label="Period" id="wfYears"></div>
+        <div class="chartbox tall"><canvas id="wfChart" aria-label="Daily treated flow against permitted flow, with hours spilled"></canvas></div>
+        <ul class="legend2">
+          <li><i style="background:var(--river)"></i>Treated flow (daily mean, L/s)</li>
+          <li><i style="background:var(--ink)"></i>Permitted flow</li>
+          <li><i style="background:var(--hot)"></i>80% screen</li>
+          <li><i class="bar" style="background:var(--sewage)"></i>Hours spilled</li>
+        </ul>
+        <div class="facts text" id="wfFacts"></div>
+        <div id="wfDates"></div>
+        <h3>What to request from the operator</h3>
+        <ul class="ask" id="wfAsk"></ul>
+        <div class="actions"><button class="btn solid" id="copy">Copy case summary</button><span class="status" id="copyStatus" role="status"></span></div>
+        <textarea id="copytext" readonly hidden aria-label="Case summary text"></textarea>
+      </section>
+
+      <section>
+        <div class="listhead"><p class="eyebrow" id="wlTitle">Leads, strongest first</p>
+          <div class="seg" role="group" aria-label="Show"><button id="wl-leads" aria-pressed="true">Leads</button><button id="wl-all" aria-pressed="false">All works</button></div></div>
+        <div class="list" id="wlList"></div>
+      </section>
+
+      <section>
+        <p class="eyebrow">How a lead is found</p>
+        <p class="note"><b>Spilling below the permit.</b> A works must keep treating its flow to full treatment (FFT) while it spills; compliance is judged as 95% of flow readings above 92% of FFT. On a day it spilled for 20+ hours, treatment should have run at FFT all day. We flag those days when daily treated flow was under 80% of FFT, a margin for outlet metering and daily averaging.</p>
+        <p class="note"><b>Spills the weather doesn't explain.</b> Oct 2024 to Oct 2026: days the monitor recorded 1+ hour of spilling while two independent models gave under 5% chance from the rain and ground wetness (a statistical model of each overflow, and a water balance of each works fitted to its treated flow).</p>
+        <p class="note"><b>A lead is a reason to look, not evidence of a breach.</b> Daily volumes are measured at the outlet while permits apply at the inlet; the operator's 15-minute flow (MON4) and overflow (MON3) records settle it. Permitted flows come from the Oxford Rivers Improvement Campaign's capacity sheet. Ofwat found capacity and operational issues at over two-thirds of Thames Water works with FFT permits, and <a href="https://www.nature.com/articles/s41545-021-00108-3" target="_blank" rel="noopener">Hammond et al. 2021</a> found a Thames Water works spilling well below its permitted flow.</p>
+      </section>
+    </div>
+
+    <!-- ===== Spills by day: forecast / explain / observed ===== -->
+    <div class="tab" id="tab-day" hidden>
+      <section>
+        <p class="eyebrow">Selected day</p>
+        <p class="date" id="dateBig"></p>
+        <div style="margin-top:10px" class="seg" role="group" aria-label="What the map shows">
+          <button id="m-obs" aria-pressed="false">What happened</button>
+          <button id="m-exp" aria-pressed="false">Explain</button>
+          <button id="m-fc" aria-pressed="true">Forecast</button>
+        </div>
+        <p class="modehelp" id="modehelp"></p>
+      </section>
+
+      <section class="kpis">
+        <div class="kpi"><b id="k1">–</b><small id="k1l">overflows spilled</small></div>
+        <div class="kpi"><b id="k2">–</b><small id="k2l">model expected</small></div>
+      </section>
+
+      <section class="card">
+        <p class="eyebrow">Overflow</p>
+        <h2 id="sName">–</h2>
+        <div class="chips" id="sChips"></div>
+        <div class="facts" id="sFacts"></div>
+        <div class="chartbox"><canvas id="sChart" aria-label="Spill chance over the test year"></canvas></div>
+        <p class="note" id="sNote"></p>
+      </section>
+
+      <section>
+        <p class="eyebrow" id="rankTitle">Highest chance today</p>
+        <div class="list" id="rank"></div>
+      </section>
+
+      <section>
+        <p class="eyebrow">How good is the forecast?</p>
+        <table id="scores"></table>
+        <p class="note" id="scoreNote"></p>
+        <div class="chartbox" style="height:170px"><canvas id="calChart" aria-label="Calibration chart"></canvas></div>
+      </section>
+
+      <section>
+        <p class="eyebrow">How to read this</p>
+        <p class="note">Overflows release untreated sewage into rivers when sewers are overloaded. The model is a per-overflow "bathtub": recent rain plus how wet the catchment is (Thames flow at Farmoor). <b>Explain</b> uses the rain that actually fell; <b>Forecast</b> stands at midnight with no rain forecast. Scores are on a test year the model never saw.</p>
+        <p class="note">River glow is a relative index: each overflow's spill chance, scaled by the size of its works (treated flow), summed downstream and divided by the river length upstream as a stand-in for dilution. It is a model estimate, not a measurement. Sewage spills indicate risk; they do not confirm water quality.</p>
+      </section>
+    </div>
+
+    <p class="note">Data: Thames Water EDM alerts, treated-flow files and 2025 EDM annual return; Environment Agency rain and flow gauges and LIDAR; Open-Meteo evaporation; OS Open Rivers (contains OS data © Crown copyright); terrain tiles from Mapzen/AWS. Built at OxHack 2026. Not affiliated with Thames Water, Ofwat or the Environment Agency.</p>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/deck.gl@9.4.0/dist.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(async function(){
+const BOUNDS=[-1.6700466447550568,51.49514987630958,-0.8215746622899808,52.00396542166687];
+const EX=3;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const [O,RV,ST,WD]=await Promise.all(['data/outfalls.json','data/rivers.json','data/stats.json','watchlist/data.json'].map(u=>fetch(u).then(r=>r.json())));
+const DATES=O.dates, SITES=O.sites;
+const WM=WD.meta, WL={}; WD.works.forEach(w=>WL[w.id]=w);
+const SI={}; SITES.forEach((s,i)=>SI[s.id]=i);
+let day=DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;
+let tab='inspect', mode='fc', is3d=true, playing=false;
+let sel=SI[WD.works[0].id], wlFilter='leads', wfYear='all';
+
+// --- values ---
+const LVW={strong:1,moderate:0.55,low:0,insufficient:0};
+const LVC={strong:[255,93,74],moderate:[240,163,58],low:[128,146,146],insufficient:[90,104,104]};
+const LVL={strong:'Strong lead',moderate:'Moderate lead',low:'Low',insufficient:'Not enough data'};
+function val(s,d){ if(!s.pe) return null; const a=mode==='obs'?s.obs:mode==='exp'?s.pe:s.pf; return a[d]; }
+const W=SITES.map(s=>s.type==='works'?(s.size?s.size/1000:0.3):0.15);
+const ref=RV.map(r=>r.u.length?r.u.reduce((a,i)=>a+W[i],0)/Math.max(r.L,2):0);
+const pos=ref.filter(x=>x>0).sort((a,b)=>a-b); const K=pos[Math.floor(pos.length*0.35)]||1; const TMAX=Math.log10(1+pos[pos.length-1]/K);
+function pressure(r,d){
+  if(tab==='inspect'){ // where sewage from leads goes; the selected works' route at full strength
+    if(DS&&DS.has(r.k)) return 1;
+    let m=0; for(const i of r.u){const w=WL[SITES[i].id]; if(w) m=Math.max(m,LVW[w.level]*0.42);} return m; }
+  if(!r.u.length) return 0; let s=0; for(const i of r.u){const v=val(SITES[i],d); if(v) s+=W[i]*v;} return Math.min(1,Math.log10(1+s/Math.max(r.L,2)/K)/TMAX); }
+function ramp(t,a){ // teal -> amber -> coral
+  const c=t<.5?[60+(240-60)*t*2,142+(163-142)*t*2,166+(58-166)*t*2]:[240+(255-240)*(t-.5)*2,163+(93-163)*(t-.5)*2,58+(74-58)*(t-.5)*2];
+  return [c[0],c[1],c[2],a]; }
+const downSet=()=>sel>=0?new Set(SITES[sel].downstream):null;
+let DS=downSet();
+let P=RV.map(r=>pressure(r,day));
+
+// --- deck ---
+const {Deck,MapView,TerrainLayer,PathLayer,ScatterplotLayer,TripsLayer,TextLayer,FlyToInterpolator,LightingEffect,AmbientLight,DirectionalLight}=deck;
+const VIEWS={all:{longitude:-1.255,latitude:51.705,zoom:9.75,pitch:52,bearing:-12},
+  city:{longitude:-1.252,latitude:51.742,zoom:12.2,pitch:58,bearing:-24},
+  pm:{longitude:-1.282,latitude:51.766,zoom:13.3,pitch:60,bearing:20},
+  sand:{longitude:-1.218,latitude:51.716,zoom:13.1,pitch:58,bearing:-40}};
+let viewState={...VIEWS.all};
+const lighting=new LightingEffect({amb:new AmbientLight({color:[255,255,255],intensity:0.95}),sun:new DirectionalLight({color:[255,236,210],intensity:1.25,direction:[-1,-2,-2.2]})});
+const ADD={blend:true,blendColorOperation:'add',blendColorSrcFactor:'src-alpha',blendColorDstFactor:'one',blendAlphaOperation:'add',blendAlphaSrcFactor:'one',blendAlphaDstFactor:'one-minus-src-alpha',depthWriteEnabled:false};
+const Z=(z,o)=>is3d?z*EX+o:0;
+const PLACES=[['Oxford',-1.2577,51.7520],['Abingdon',-1.2826,51.6708],['Witney',-1.4854,51.7859],['Bicester',-1.1531,51.8994],['Thame',-0.9750,51.7457],['Didcot',-1.2410,51.6097],['Wantage',-1.4260,51.5880],['Kidlington',-1.2900,51.8231],['Wheatley',-1.1380,51.7470],['Port Meadow',-1.2790,51.7705],['Sandford',-1.2310,51.7150]];
+
+function trips(){
+  const out=[];
+  if(tab==='inspect'){ const s=SITES[sel]; if(s&&s.trip&&s.trip.length>1) for(let j=0;j<6;j++) out.push({i:sel,path:s.trip,ts:s.ts.map(t=>t-j*11000),v:1}); return out; }
+  SITES.forEach((s,i)=>{ const v=val(s,day); if(v==null||v<0.5||!s.trip||s.trip.length<2) return;
+    for(let j=0;j<4;j++) out.push({i,path:s.trip,ts:s.ts.map(t=>t-j*16000),v}); });
+  return out;
+}
+let TR=trips();
+function siteColor(s){
+  if(tab==='inspect'){const w=WL[s.id]; return w?[...LVC[w.level],255]:[70,84,86,170];}
+  const v=val(s,day); if(v==null) return [120,130,130,200]; return ramp(v,255); }
+function siteRadius(s,i){
+  if(tab==='inspect'){const w=WL[s.id]; return (i===sel?4:0)+(w?(w.level==='strong'?8:w.level==='moderate'?6.5:4.5):3);}
+  const v=val(s,day); return (i===sel?3:0)+(v==null?3.5:5+5*v); }
+function ringData(){
+  if(tab==='inspect') return SITES.filter(s=>{const w=WL[s.id];return w&&w.level==='strong'});
+  return SITES.filter(s=>{const v=val(s,day);return v!=null&&v>=0.5}); }
+
+function layers(time){
+  const pulse=reduce?0.5:(Math.sin(time/380)+1)/2;
+  const loop=62500+48000, ct=reduce?30000:((time*9)%loop);
+  const trig=[day,mode,tab,sel];
+  return [
+    new TerrainLayer({id:'terrain',elevationData:'data/elevation.png',texture:'data/terrain.jpg',bounds:BOUNDS,
+      elevationDecoder:{rScaler:256*(is3d?EX:0),gScaler:is3d?EX:0,bScaler:(is3d?EX:0)/256,offset:-32768*(is3d?EX:0)},
+      meshMaxError:3,loadOptions:{terrain:{worker:false}},material:{ambient:.55,diffuse:.7,shininess:8,specularColor:[30,30,30]},
+      updateTriggers:{elevationDecoder:is3d},onTileLoad:()=>{},color:[255,255,255]}),
+    new PathLayer({id:'net',data:RV,getPath:r=>r.p.map(q=>[q[0],q[1],Z(q[2],10)]),widthUnits:'pixels',
+      getWidth:r=>r.m?2:0.8,getColor:r=>r.c?[150,140,200,70]:(DS&&!DS.has(r.k)?[95,183,207,r.m?70:28]:[95,183,207,r.m?150:55]),
+      updateTriggers:{getPath:is3d,getColor:[sel]},jointRounded:true,capRounded:true,parameters:{depthCompare:'always'}}),
+    new PathLayer({id:'glow',data:RV.filter((r,i)=>ref[i]>0),getPath:r=>r.p.map(q=>[q[0],q[1],Z(q[2],12)]),widthUnits:'pixels',
+      getWidth:r=>{const t=P[r.k];return t>0?5+14*t:0},getColor:r=>{const t=P[r.k];const dim=tab==='day'&&DS&&!DS.has(r.k)?.25:1;return ramp(t,(18+62*t)*dim)},
+      updateTriggers:{getPath:is3d,getWidth:trig,getColor:trig},jointRounded:true,capRounded:true,parameters:{...ADD,depthCompare:'always'}}),
+    new PathLayer({id:'core',data:RV.filter((r,i)=>ref[i]>0),getPath:r=>r.p.map(q=>[q[0],q[1],Z(q[2],14)]),widthUnits:'pixels',
+      getWidth:r=>{const t=P[r.k];return t>0?1.5+3*t:0},getColor:r=>{const t=P[r.k];const dim=tab==='day'&&DS&&!DS.has(r.k)?.3:1;return ramp(Math.min(1,0.25+t*0.85),235*dim)},
+      updateTriggers:{getPath:is3d,getWidth:trig,getColor:trig},pickable:true,autoHighlight:true,highlightColor:[255,255,255,180],
+      jointRounded:true,capRounded:true,parameters:{depthCompare:'always'}}),
+    new TripsLayer({id:'flow',data:TR,getPath:d=>d.path.map(q=>[q[0],q[1],Z(q[2],16)]),getTimestamps:d=>d.ts,getColor:d=>[255,170,80,150],
+      widthMinPixels:2.5,trailLength:5200,currentTime:ct,fadeTrail:true,capRounded:true,jointRounded:true,opacity:.9,
+      updateTriggers:{getPath:is3d},parameters:{...ADD,depthCompare:'always'}}),
+    new ScatterplotLayer({id:'ring',data:ringData(),getPosition:s=>[s.lon,s.lat,Z(s.z,22)],
+      radiusUnits:'pixels',getRadius:s=>9+10*pulse,stroked:true,filled:false,lineWidthUnits:'pixels',getLineWidth:1.5,
+      getLineColor:s=>[255,140,90,Math.round(180*(1-pulse))],updateTriggers:{getRadius:pulse,getLineColor:pulse,getPosition:is3d},parameters:{depthCompare:'always'}}),
+    new ScatterplotLayer({id:'sites',data:SITES,getPosition:s=>[s.lon,s.lat,Z(s.z,22)],radiusUnits:'pixels',
+      getRadius:s=>siteRadius(s,SITES.indexOf(s)),getFillColor:s=>siteColor(s),
+      stroked:true,lineWidthUnits:'pixels',getLineWidth:(s)=>SITES.indexOf(s)===sel?2.5:1,getLineColor:(s)=>SITES.indexOf(s)===sel?[255,255,255,255]:[11,19,21,220],
+      pickable:true,autoHighlight:true,highlightColor:[255,255,255,90],
+      updateTriggers:{getRadius:trig,getFillColor:trig,getLineWidth:sel,getLineColor:sel,getPosition:is3d},
+      onClick:({index})=>{select(index,true)},parameters:{depthCompare:'always'}}),
+    new TextLayer({id:'places',data:PLACES,getPosition:p=>[p[1],p[2],Z(90,120)],getText:p=>p[0],getSize:p=>p[0]==='Oxford'?15:12,
+      getColor:p=>p[0]==='Oxford'?[230,236,233,235]:[180,196,196,200],fontFamily:'Instrument Sans, system-ui, sans-serif',fontWeight:500,
+      getTextAnchor:'start',getAlignmentBaseline:'center',getPixelOffset:[6,0],fontSettings:{sdf:true},outlineWidth:3,outlineColor:[11,19,21,230],
+      updateTriggers:{getPosition:is3d},parameters:{depthCompare:'always'}})
+  ];
+}
+const TIPSTYLE={background:'#111b1e',color:'#e6ece9',border:'1px solid #22313a',borderRadius:'8px',padding:'8px 10px'};
+function tooltip({object,layer}){
+  if(!object) return null;
+  if(layer.id==='sites'){
+    if(tab==='inspect'){const w=WL[object.id];
+      const lab=w?`${LVL[w.level]}${w.fft_ls&&w.allday_days?` · ${w.well_below_days}/${w.allday_days} all-day spills under 80% of permit`:''}${w.unexplained_days?` · ${w.unexplained_days} unexplained spill days`:''}`:'Network overflow: no treated-flow data, not screened';
+      return {html:`<div class="tip"><b>${object.name}</b><br>${object.water?'into '+object.water+'<br>':''}${lab}</div>`,style:TIPSTYLE};}
+    const v=val(object,day);const lab=mode==='obs'?(v==null?'no data':v?'spilled':'no spill'):(v==null?'not modelled':Math.round(v*100)+'% chance');
+    return {html:`<div class="tip"><b>${object.name}</b><br>${typeLabel(object.type)}${object.water?' → '+object.water:''}<br>${lab}</div>`,style:TIPSTYLE};}
+  if(layer.id==='core'){const t=P[object.k];
+    if(tab==='inspect') return {html:`<div class="tip"><b>${object.n||'Unnamed watercourse'}</b><br>${object.u.length} overflow${object.u.length>1?'s':''} upstream${DS&&DS.has(object.k)?`<br>downstream of ${SITES[sel].name}`:''}</div>`,style:TIPSTYLE};
+    return {html:`<div class="tip"><b>${object.n||'Unnamed watercourse'}</b><br>${object.u.length} overflow${object.u.length>1?'s':''} upstream<br>pressure ${(t*100).toFixed(0)} / 100</div>`,style:TIPSTYLE};}
+  return null;
+}
+const D=new Deck({parent:document.getElementById('map'),views:new MapView({repeat:false,farZMultiplier:2}),initialViewState:viewState,controller:{touchRotate:true,dragRotate:true},
+  effects:[lighting],layers:layers(0),getTooltip:tooltip,onViewStateChange:({viewState:v})=>{viewState=v;D.setProps({initialViewState:viewState});},
+  onAfterRender:()=>{document.getElementById('loading').hidden=true}});
+setTimeout(()=>{document.getElementById('loading').hidden=true},6000);
+function frame(t){ D.setProps({layers:layers(t)}); if(!reduce) requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+const redraw=()=>{ if(reduce) D.setProps({layers:layers(0)}); };
+function fly(v){viewState={...v,transitionDuration:1800,transitionInterpolator:new FlyToInterpolator({speed:1.4})};D.setProps({initialViewState:viewState});}
+const camMap={'cam-all':'all','cam-city':'city','cam-pm':'pm','cam-sand':'sand'};
+for(const id in camMap) document.getElementById(id).onclick=()=>fly({...VIEWS[camMap[id]],pitch:is3d?VIEWS[camMap[id]].pitch:0});
+document.getElementById('tog3d').onclick=e=>{is3d=!is3d;e.target.textContent=is3d?'2D':'3D';e.target.setAttribute('aria-pressed',String(is3d));fly({...viewState,pitch:is3d?55:0,bearing:is3d?viewState.bearing:0});redraw();};
+
+// --- shared helpers ---
+const fmtDate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+const fdate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+const fmt=n=>n==null?'–':n.toLocaleString('en-GB');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clean=s=>(!s||s==='None'||s==='nan')?null:s;
+const typeLabel=t=>({works:'Treatment works overflow',pumping:'Pumping station overflow',network:'Sewer network overflow',unknown:'Overflow'})[t];
+Chart.defaults.font.family='Instrument Sans, system-ui, sans-serif';
+
+// ===================== Inspect tab =====================
+const legendHTML={
+  inspect:`<div><b style="color:var(--ink);font-weight:500">Sewage works screened for inspection</b></div>
+    <div class="keys"><span><i class="dot" style="background:#ff5d4a"></i>strong lead</span><span><i class="dot" style="background:#f0a33a"></i>moderate</span><span><i class="dot" style="background:#809292"></i>low</span><span><i class="dot" style="background:#465456"></i>not screened</span></div>
+    <div>Glow: rivers downstream of leads. The selected works' route to the Thames glows brightest; particles trace where its spills go. Height ×3.</div>`,
+  day:`<div><b style="color:var(--ink);font-weight:500">River glow</b> · relative sewage pressure</div><div class="ramp"></div><div class="ends"><span>trace</span><span>heavy</span></div>
+    <div>Dots: overflows, coloured by spill chance that day. Particles show where spilled sewage travels. Height ×3.</div>`};
+const T=WM.totals;
+document.getElementById('wlKpis').innerHTML=[[T.strong,'strong leads'],[T.moderate,'moderate leads'],[T.well_below_days,'all-day spill days under 80% of permitted flow'],[T.unexplained_days,'spill days the weather doesn\'t explain (2024–26)']]
+  .map(([v,l])=>`<div class="kpi"><b>${fmt(v)}</b><small>${l}</small></div>`).join('');
+
+function belowDays(w){
+  if(!w.fft_ls) return []; const s=w.series, out=[];
+  for(let k=0;k<WM.days.length;k++) if(s.h[k]!=null&&s.h[k]>=WM.all_day_h&&s.q[k]!=null&&s.q[k]<WM.screen_share*w.fft_ls) out.push({d:WM.days[k],pct:Math.round(s.q[k]/w.fft_ls*100),h:s.h[k]});
+  return out.sort((a,b)=>a.pct-b.pct); }
+function findings(w){
+  const f=[];
+  if(w.fft_ls&&w.allday_days){
+    if(w.well_below_days) f.push(`On <b>${w.well_below_days} of ${w.allday_days}</b> days it spilled for 20+ hours, it treated under 80% of its permitted ${fmt(w.fft_ls)} L/s. A typical all-day spill day ran at <b>${w.median_allday_pct_fft}%</b>.`);
+    else f.push(`On its ${w.allday_days} all-day spill days it treated a typical ${w.median_allday_pct_fft}% of its permitted ${fmt(w.fft_ls)} L/s, so treatment kept up with the permit.`);
+  } else if(!w.fft_ls) f.push('No published permitted flow, so treatment during spills cannot be screened.');
+  else f.push('No all-day spills in the treated-flow record (2022–2025).');
+  if(w.unexplained_days) f.push(`<b>${w.unexplained_days}</b> of its ${w.spill_days_test} spill days in Oct 2024–Oct 2026 are not explained by the rain or by how wet the ground was.`);
+  return f; }
+function asks(w){
+  const a=[];
+  if(w.well_below_days) a.push('15-minute flow-to-full-treatment (MON4) records for the dates listed, against the permit condition.','Storm-tank level and pump-back logs, and inlet pump or screen faults on those dates.');
+  if(w.unexplained_days) a.push('Raw spill-monitor (MON3) signals and alarm logs for the unexplained dates, and blockage or pump-failure reports.');
+  if(!a.length) a.push('Nothing specific: no lead on either test.');
+  return a; }
+function routeNames(i){ // named watercourses its spills pass through, in order
+  const seen=[], names=new Set([(SITES[i].water||'').toLowerCase().replace(/^river /,'')]);
+  for(const k of SITES[i].downstream){ const n=RV[k]&&RV[k].n; if(n&&!names.has(n.toLowerCase())){names.add(n.toLowerCase());seen.push(n);} if(seen.length>=6) break; }
+  return seen; }
+function summary(w,i){
+  const b=belowDays(w).slice(0,10), u=w.unexplained_dates.slice(0,10), r=routeNames(i);
+  return [`${w.name} (permit ${w.id}): ${LVL[w.level]}`,
+    `Discharges to ${w.water||'n/a'}${r.length?', then '+r.join(' → '):''}. ${w.asset||''}; population equivalent ${fmt(w.population)}.`,
+    ...findings(w).map(s=>'- '+s.replace(/<[^>]+>/g,'')),
+    `Thames Water 2025 return: reason "${clean(w.tw_reason)||'n/a'}"; ${clean(w.tw_investigation)||'investigation not stated'}; ${clean(w.tw_improvement)||'improvement not stated'}.`,
+    b.length?'Lowest-treatment all-day spill days: '+b.map(x=>`${x.d} (${x.pct}% of FFT, ${x.h} h)`).join('; '):'',
+    u.length?'Unexplained spill days: '+u.join(', '):'',
+    'Request: '+asks(w).join(' '),
+    'Screen only: daily outlet volumes vs published FFT; a lead is not evidence of a breach. Source: Spillcast (OxHack 2026).'].filter(Boolean).join('\n'); }
+
+let wfChart;
+function renderWlList(){
+  const rows=WD.works.filter(w=>wlFilter==='all'||w.level==='strong'||w.level==='moderate');
+  document.getElementById('wlTitle').textContent=wlFilter==='all'?'All screened works':'Leads, strongest first';
+  const el=document.getElementById('wlList'); el.innerHTML='';
+  rows.forEach(w=>{const i=SI[w.id]; const b=document.createElement('button'); b.className='row wl'; b.setAttribute('aria-current',String(i===sel));
+    b.innerHTML=`<span>${esc(w.name)}<small>${esc(w.water||'')}</small></span><span class="pill ${w.level}">${LVL[w.level]}</span><span class="v" title="days under 80% / all-day spill days">${w.fft_ls&&w.allday_days?w.well_below_days+'/'+w.allday_days:'–'}</span>`;
+    b.onclick=()=>{select(i,true);document.getElementById('panel').scrollTo({top:0,behavior:reduce?'auto':'smooth'});}; el.appendChild(b);});
+}
+function renderWlFile(){
+  const s=SITES[sel], w=WL[s.id];
+  if(!w){
+    document.getElementById('wfKicker').innerHTML=`<span class="pill none">Not screened</span>`;
+    document.getElementById('wfName').textContent=s.name;
+    document.getElementById('wfFind').innerHTML=`<p class="finding">${typeLabel(s.type)}. Thames Water publishes no treated flow for it, so it cannot be screened against a permit. Its spills still enter ${esc(s.water||'the river')}.</p>`;
+    document.getElementById('wfRoute').textContent=''; ['wfFacts','wfDates','wfAsk','wfYears'].forEach(id=>document.getElementById(id).innerHTML='');
+    if(wfChart){wfChart.destroy();wfChart=null;} return; }
+  document.getElementById('wfKicker').innerHTML=`<span class="pill ${w.level}">${LVL[w.level]}</span>&nbsp; ${esc(w.id)}`;
+  document.getElementById('wfName').textContent=w.name;
+  document.getElementById('wfFind').innerHTML=findings(w).map(f=>`<p class="finding">${f}</p>`).join('');
+  const r=routeNames(sel);
+  document.getElementById('wfRoute').innerHTML=`Spills enter <b>${esc(w.water||'the river')}</b>${r.length?' then '+r.map(n=>`<b>${esc(n)}</b>`).join(' → '):''}.`;
+  const facts=[['Permitted flow (FFT)',w.fft_ls?fmt(w.fft_ls)+' L/s':'not published'],['Population equivalent',fmt(w.population)],
+    ['Spill-hours 2023 / 24 / 25',['2023','2024','2025'].map(y=>fmt(w.spill_hours[y])).join(' / ')],['Asset',clean(w.asset)],
+    ['Thames Water: reason for high spilling',clean(w.tw_reason)],['Thames Water: investigation',clean(w.tw_investigation)]];
+  document.getElementById('wfFacts').innerHTML=facts.map(([k,v])=>`<div><span>${k}</span><b>${esc(v||'–')}</b></div>`).join('');
+  const b=belowDays(w).slice(0,10), u=w.unexplained_dates.slice(0,10);
+  document.getElementById('wfDates').innerHTML=(b.length?`<h3>Lowest treatment while spilling all day</h3><ul class="dates">${b.map(x=>`<li>${fdate(x.d)} <span>${x.pct}% · ${x.h} h</span></li>`).join('')}</ul>`:'')+
+    (u.length?`<h3>Spill days the weather doesn't explain</h3><ul class="dates">${u.map(d=>`<li>${fdate(d)}</li>`).join('')}</ul>`:'');
+  document.getElementById('wfAsk').innerHTML=asks(w).map(a=>`<li>${esc(a)}</li>`).join('');
+  document.getElementById('copytext').hidden=true; document.getElementById('copyStatus').textContent='';
+  renderWfYears(); renderWfChart(); }
+function renderWfYears(){
+  const el=document.getElementById('wfYears');
+  el.innerHTML=[['all','2022–25'],['2023','2023'],['2024','2024'],['2025','2025']].map(([k,l])=>`<button aria-pressed="${k===wfYear}" data-y="${k}">${l}</button>`).join('');
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{wfYear=b.dataset.y;renderWfYears();renderWfChart();}); }
+function renderWfChart(){
+  const w=WL[SITES[sel].id]; if(!w) return; const s=w.series, DAYS=WM.days;
+  let a=0, z=DAYS.length;
+  if(wfYear!=='all'){a=Math.max(0,DAYS.indexOf(wfYear+'-01-01')); const e=DAYS.indexOf((+wfYear+1)+'-01-01'); z=e<0?DAYS.length:e;}
+  const labels=DAYS.slice(a,z), q=s.q.slice(a,z), h=s.h.slice(a,z);
+  const ds=[{type:'bar',label:'Hours spilled',data:h,yAxisID:'h',backgroundColor:'rgba(240,163,58,0.55)',barPercentage:1,categoryPercentage:1,order:3},
+    {type:'line',label:'Treated flow',data:q,yAxisID:'q',borderColor:'#5fb7cf',borderWidth:1.2,pointRadius:0,spanGaps:false,order:1}];
+  if(w.fft_ls) ds.push({type:'line',label:'Permitted flow',data:labels.map(()=>w.fft_ls),yAxisID:'q',borderColor:'#e6ece9',borderWidth:1.1,pointRadius:0,order:0},
+    {type:'line',label:'80% screen',data:labels.map(()=>w.fft_ls*WM.screen_share),yAxisID:'q',borderColor:'#ff5d4a',borderWidth:1,borderDash:[4,3],pointRadius:0,order:0});
+  const qmax=Math.max(w.fft_ls||0,...q.filter(v=>v!=null))*1.1;
+  if(wfChart) wfChart.destroy();
+  wfChart=new Chart(document.getElementById('wfChart'),{data:{labels,datasets:ds},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{callbacks:{title:it=>fdate(it[0].label),label:c=>c.dataset.label==='Hours spilled'?`Spilled ${c.parsed.y??0} h`:`${c.dataset.label}: ${Math.round(c.parsed.y)} L/s`}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#8fa3a3',autoSkip:false,maxRotation:0,font:{size:10},callback:(v,i)=>{const d=labels[i];if(!d||d.slice(8)!=='01')return '';
+        if(wfYear==='all')return d.slice(5,7)==='01'?d.slice(0,4):''; return ['01','04','07','10'].includes(d.slice(5,7))?new Date(d).toLocaleDateString('en-GB',{month:'short'}):'';}}},
+      q:{position:'left',min:0,suggestedMax:qmax,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8fa3a3',font:{size:10},maxTicksLimit:5},title:{display:true,text:'L/s',color:'#8fa3a3',font:{size:10}}},
+      h:{position:'right',min:0,max:48,grid:{display:false},ticks:{color:'#8fa3a3',font:{size:10},stepSize:12,callback:v=>v<=24?v+' h':''}}}}}); }
+document.getElementById('wl-leads').onclick=()=>{wlFilter='leads';document.getElementById('wl-leads').setAttribute('aria-pressed','true');document.getElementById('wl-all').setAttribute('aria-pressed','false');renderWlList();};
+document.getElementById('wl-all').onclick=()=>{wlFilter='all';document.getElementById('wl-all').setAttribute('aria-pressed','true');document.getElementById('wl-leads').setAttribute('aria-pressed','false');renderWlList();};
+document.getElementById('copy').onclick=()=>{
+  const w=WL[SITES[sel].id]; if(!w) return; const t=summary(w,sel), st=document.getElementById('copyStatus'), ta=document.getElementById('copytext');
+  const fallback=()=>{ta.value=t;ta.hidden=false;ta.focus();ta.select();st.textContent='Select and copy the text below.';};
+  try{navigator.clipboard.writeText(t).then(()=>{st.textContent='Copied case summary.';},fallback);}catch(e){fallback();} };
+
+// ===================== Spills by day tab =====================
+const HELP={obs:'Spill monitors: did each overflow spill that day? This is the truth the model is scored against.',
+  exp:'Given the rain that actually fell, how likely was a spill? Used for what-ifs and finding spills the weather does not explain.',
+  fc:'Standing at midnight with no rain forecast: today\'s chance of a spill, from wet ground, rain so far and whether it is already spilling.'};
+function kpis(){
+  let n=0,obs=0;SITES.forEach(s=>{if(!s.pe)return;n++;obs+=s.obs[day]||0;});
+  document.getElementById('k1').textContent=`${obs}/${n}`;document.getElementById('k1l').textContent='overflows spilled (monitors)';
+  if(mode==='obs'){let h=0;SITES.forEach(s=>{if(s.hours)h+=s.hours[day]||0});document.getElementById('k2').textContent=Math.round(h);document.getElementById('k2l').textContent='spill-hours that day';}
+  else{let e=0;SITES.forEach(s=>{if(s.pe)e+=(mode==='exp'?s.pe:s.pf)[day]||0});document.getElementById('k2').textContent=e.toFixed(1);document.getElementById('k2l').textContent=mode==='exp'?'expected (Explain)':'expected (Forecast)';}
+}
+function rank(){
+  const rows=SITES.map((s,i)=>({s,i,v:val(s,day)})).filter(r=>r.v!=null).sort((a,b)=>b.v-a.v||((b.s.size||0)-(a.s.size||0))).slice(0,10);
+  document.getElementById('rankTitle').textContent=mode==='obs'?'Spilling today (largest works first)':'Highest chance today';
+  const el=document.getElementById('rank');el.innerHTML='';
+  rows.forEach(r=>{const b=document.createElement('button');b.className='row';b.innerHTML=`<span>${esc(r.s.name)}</span><span class="bar"><i style="width:${Math.round(r.v*100)}%"></i></span><span class="v">${mode==='obs'?(r.v?'yes':'no'):Math.round(r.v*100)+'%'}</span>`;b.onclick=()=>select(r.i,true);el.appendChild(b);});
+}
+let sChart;
+function card(){
+  const s=SITES[sel]; if(!s) return;
+  document.getElementById('sName').textContent=s.name;
+  const v=val(s,day);
+  const chips=[`<span class="chip">${typeLabel(s.type)}</span>`];
+  if(s.water) chips.push(`<span class="chip">into ${esc(s.water)}</span>`);
+  if(s.card&&s.card.gw_tag) chips.push('<span class="chip gw">Thames Water: groundwater</span>');
+  if(s.obs&&s.obs[day]) chips.push('<span class="chip on">spilled this day</span>');
+  document.getElementById('sChips').innerHTML=chips.join('');
+  const c=s.card||{};
+  const F=[[mode==='obs'?'Monitor this day':'Chance this day',v==null?'–':mode==='obs'?(v?'spilled':'no spill'):Math.round(v*100)+'%'],
+    ['Spill-hours / year',c.hours_yr!=null?c.hours_yr.toLocaleString():'–'],
+    ['Spills on wet ground alone at',c.flow_trigger!=null?c.flow_trigger+' m³/s':(c.tau?'never seen':'–')],
+    ['Rain that tips it (winter)',c.rain_trigger!=null?c.rain_trigger+' mm':'–'],
+    ['Rain memory',c.tau?c.tau+' h':'–'],
+    ['Wet-ground share',c.wet_share!=null?Math.round(c.wet_share*100)+'%':'–']];
+  document.getElementById('sFacts').innerHTML=F.map(f=>`<div><span>${f[0]}</span><b>${f[1]}</b></div>`).join('');
+  document.getElementById('sNote').textContent=s.pe?'Line: model chance each day in the test year. Bars: days the monitor recorded a spill. The pale line marks the selected day.':'Too few reliable spill records to fit and test a model here.';
+  const ds=s.pe?[{type:'bar',data:s.obs.map(x=>x?1:null),backgroundColor:'rgba(240,163,58,0.28)',barPercentage:1,categoryPercentage:1,order:2},
+    {type:'line',data:(mode==='exp'?s.pe:s.pf),borderColor:'#5fb7cf',borderWidth:1.4,pointRadius:0,tension:.25,order:1}]:[];
+  const marker={id:'mk',afterDatasetsDraw(ch){const x=ch.scales.x.getPixelForValue(day);const {top,bottom}=ch.chartArea;const g=ch.ctx;g.save();g.strokeStyle='rgba(230,236,233,.8)';g.lineWidth=1;g.beginPath();g.moveTo(x,top);g.lineTo(x,bottom);g.stroke();g.restore();}};
+  if(sChart) sChart.destroy();
+  sChart=new Chart(document.getElementById('sChart'),{data:{labels:DATES,datasets:ds},plugins:[marker],options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},
+    scales:{x:{ticks:{color:'#8fa3a3',maxTicksLimit:5,font:{size:10},callback:(v,i)=>{const d=DATES[i];return d.slice(8)==='01'?new Date(d).toLocaleDateString('en-GB',{month:'short'}):''},autoSkip:false,maxRotation:0},grid:{display:false}},
+      y:{min:0,max:1,ticks:{color:'#8fa3a3',font:{size:10},stepSize:.5,callback:v=>v*100+'%'},grid:{color:'rgba(255,255,255,.05)'}}}}});
+}
+function spark(){
+  const cv=document.getElementById('spark'),r=cv.getBoundingClientRect(),dpr=devicePixelRatio||1; if(!r.width) return; cv.width=r.width*dpr;cv.height=r.height*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);
+  const cnt=DATES.map((_,d)=>SITES.reduce((a,s)=>a+(s.obs&&s.obs[d]?1:0),0));const mx=Math.max(...cnt);const bw=r.width/DATES.length;
+  cnt.forEach((c,d)=>{const h=c/mx*r.height;g.fillStyle=d===day?'#e6ece9':'rgba(240,163,58,.45)';g.fillRect(d*bw,r.height-h,Math.max(1,bw-.3),h);});
+}
+function scores(){
+  const b=ST.B.brier;const rows=[['Always guess the average','clim'],['Same as yesterday','persistence'],['Spillcast forecast','core_forecast'],['Gradient boosting','gbm_forecast']];
+  document.getElementById('scores').innerHTML='<tr><th>Brier score (lower is better)</th><th>All days</th><th>New spills</th></tr>'+rows.map(r=>`<tr><td${r[1]==='core_forecast'?' class="me"':''}>${r[0]}</td><td${r[1]==='core_forecast'?' class="me"':''}>${b[r[1]].all.toFixed(3)}</td><td${r[1]==='core_forecast'?' class="me"':''}>${b[r[1]].onset.toFixed(3)}</td></tr>`).join('');
+  document.getElementById('scoreNote').textContent=`Test year ${ST.B.start} to ${ST.B.end}, ${ST.B.sites} overflows, ${ST.B.days.toLocaleString()} site-days. Weather alone predicted ${ST.B.exp_h.toLocaleString()} spill-hours; monitors recorded ${ST.B.obs_h.toLocaleString()}. Below: when the forecast says p, how often it really spilled.`;
+  new Chart(document.getElementById('calChart'),{type:'scatter',data:{datasets:[{data:ST.B.cal.map(c=>({x:c[0],y:c[1]})),pointRadius:ST.B.cal.map(c=>2+Math.log10(c[2])*1.6),backgroundColor:'#f0a33a',borderColor:'#f0a33a',showLine:true,borderWidth:1.2},{data:[{x:0,y:0},{x:1,y:1}],showLine:true,borderColor:'rgba(230,236,233,.35)',borderDash:[4,4],pointRadius:0,borderWidth:1}]},
+    options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{min:0,max:1,title:{display:true,text:'Forecast said',color:'#8fa3a3',font:{size:10}},ticks:{color:'#8fa3a3',font:{size:10},stepSize:.5,callback:v=>v*100+'%'},grid:{color:'rgba(255,255,255,.05)'}},y:{min:0,max:1,title:{display:true,text:'Actually spilled',color:'#8fa3a3',font:{size:10}},ticks:{color:'#8fa3a3',font:{size:10},stepSize:.5,callback:v=>v*100+'%'},grid:{color:'rgba(255,255,255,.05)'}}}}});
+}
+
+// ===================== state =====================
+function refresh(){ P=RV.map(r=>pressure(r,day)); TR=trips(); redraw(); }
+function select(i,flyTo){ sel=i; DS=downSet();
+  if(tab==='inspect'){renderWlFile();renderWlList();} else card();
+  refresh();
+  if(flyTo){const s=SITES[i];fly({longitude:s.lon+0.01,latitude:s.lat-0.02,zoom:12.2,pitch:is3d?58:0,bearing:viewState.bearing||-15});} }
+function setDay(d){ day=d; document.getElementById('day').value=d;
+  document.getElementById('dlab').textContent=DATES[d]; document.getElementById('dateBig').textContent=fmtDate(DATES[d]);
+  kpis(); rank(); card(); spark(); refresh(); }
+function setMode(m){ mode=m; ['obs','exp','fc'].forEach(k=>document.getElementById('m-'+k).setAttribute('aria-pressed',String(k===m))); document.getElementById('modehelp').textContent=HELP[m]; setDay(day); }
+function setTab(t){ tab=t;
+  document.getElementById('t-inspect').setAttribute('aria-pressed',String(t==='inspect')); document.getElementById('t-day').setAttribute('aria-pressed',String(t==='day'));
+  document.getElementById('tab-inspect').hidden=t!=='inspect'; document.getElementById('tab-day').hidden=t!=='day';
+  document.getElementById('rail').hidden=t!=='day'; document.getElementById('spark').hidden=t!=='day';
+  document.getElementById('legend').innerHTML=legendHTML[t];
+  if(t==='inspect'){ if(playing) document.getElementById('play').click(); renderWlFile(); renderWlList(); refresh(); }
+  else { setMode(mode); requestAnimationFrame(spark); }
+  try{ history.replaceState(null,'',t==='day'?'#day':'#inspect'); }catch(e){} }
+document.getElementById('t-inspect').onclick=()=>setTab('inspect'); document.getElementById('t-day').onclick=()=>setTab('day');
+document.getElementById('m-obs').onclick=()=>setMode('obs');document.getElementById('m-exp').onclick=()=>setMode('exp');document.getElementById('m-fc').onclick=()=>setMode('fc');
+const slider=document.getElementById('day');slider.max=DATES.length-1;slider.oninput=e=>setDay(+e.target.value);
+let timer=null;document.getElementById('play').onclick=e=>{playing=!playing;e.currentTarget.textContent=playing?'❚❚ Pause':'▶ Play';
+  if(playing){timer=setInterval(()=>setDay((day+1)%DATES.length),reduce?900:420);}else clearInterval(timer);};
+addEventListener('resize',()=>{if(tab==='day')spark();});
+scores(); setDay(day); setTab(location.hash==='#day'?'day':'inspect');
+})().catch(e=>{const l=document.getElementById('loading');l.hidden=false;l.textContent='The map could not load: '+e.message;console.error(e);});
+</script>
+</body></html>
