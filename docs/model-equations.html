@@ -95,7 +95,7 @@ html{scroll-behavior:smooth}
 <nav aria-label="Contents"><b>Contents</b><ol>
   <li><a href="#flowchart">Flowchart</a></li>
   <li><a href="#physics">1 · Sewage works</a></li>
-  <li><a href="#river">2 · River E. coli</a></li>
+  <li><a href="#river">2 · River quality</a></li>
   <li><a href="#stats">3 · Statistical backup</a></li>
   <li><a href="#watchlist">4 · Watchlist</a></li>
   <li><a href="#scores">5 · Scoring</a></li>
@@ -106,23 +106,23 @@ html{scroll-behavior:smooth}
 <main>
 <header>
   <h1>Spillcast model equations</h1>
-  <p>Every calculation behind the Spillcast website, in plain words, with the formula and the units of what it produces. Symbols in the formulas that are fitted separately for each sewage works are listed at the end.</p>
+  <p>Every calculation behind the Spillcast website, in plain words, with the formula and the units of what it produces: the sewage works model and its 7-day forecast, the river water-quality model on the river page, the statistical backup and the regulator watchlist. Fitted and assumed values are listed at the end.</p>
 </header>
 
 <section id="flowchart">
   <h2>How it fits together</h2>
   <p class="lede">Measurements at the top flow down through the sewage works model, then into the river model. Step numbers match the sections below.</p>
   <figure class="chart" style="margin:0">
-  <svg class="fc" viewBox="0 0 900 950" role="img" aria-labelledby="fcTitle fcDesc">
+  <svg class="fc" viewBox="0 0 900 1060" role="img" aria-labelledby="fcTitle fcDesc">
     <title id="fcTitle">Spillcast model flowchart</title>
-    <desc id="fcDesc">Rain, evaporation and Farmoor river flow drive soil runoff, groundwater leakage and household sewage, which add up to the inflow at each works. Above capacity the storm tank fills, and once it is full the excess spills. 200 runs give the chance, hours and volume of spills, which the river model mixes into river flow, carries downstream and lets die off to give E. coli per 100 ml and the unsafe distance. Treated flow tunes the works model, Port Meadow samples tune the river model, and spill records feed the statistical backup and the regulator watchlist.</desc>
+    <desc id="fcDesc">Rain (measured or forecast), evaporation and Farmoor river flow drive soil runoff, groundwater leakage and household sewage, which add up to the inflow at each works. Above capacity the storm tank fills, and once it is full the excess spills. 200 runs give the chance, hours and volume of spills. The river model takes spill days from the monitors or the physics model and each works' typical spill rate, mixes it into the flow of every 100 m of river and lets it decay downstream, giving E. coli per 100 ml and ammonia in mg per litre with swim and fish advice. Treated flow tunes the works model, and spill records feed the statistical backup, the watchlist and the river model's past spill days.</desc>
     <defs>
       <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
       <marker id="ahc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahc" d="M0,0 L10,5 L0,10 z"/></marker>
     </defs>
 
     <!-- measurements -->
-    <rect class="inp" x="26" y="20" width="160" height="56" rx="8"/><text class="t" x="106" y="43" text-anchor="middle">Rain</text><text class="s" x="106" y="62" text-anchor="middle">EA gauges · mm</text>
+    <rect class="inp" x="16" y="20" width="176" height="56" rx="8"/><text class="t" x="104" y="43" text-anchor="middle">Rain</text><text class="s" x="104" y="62" text-anchor="middle">EA gauges · ECMWF forecast · mm</text>
     <rect class="inp" x="198" y="20" width="160" height="56" rx="8"/><text class="t" x="278" y="43" text-anchor="middle">Evaporation</text><text class="s" x="278" y="62" text-anchor="middle">Open-Meteo · mm</text>
     <rect class="inp" x="370" y="20" width="160" height="56" rx="8"/><text class="t" x="450" y="43" text-anchor="middle">Farmoor river flow</text><text class="s" x="450" y="62" text-anchor="middle">EA · m³/s</text>
     <rect class="inp" x="542" y="20" width="160" height="56" rx="8"/><text class="t" x="622" y="43" text-anchor="middle">Treated flow (TDV)</text><text class="s" x="622" y="62" text-anchor="middle">Thames Water · m³/day</text>
@@ -172,21 +172,22 @@ html{scroll-behavior:smooth}
     <path class="ar" d="M485,660 L697,650" marker-end="url(#ah)"/>
 
     <!-- river region -->
-    <rect class="region" x="14" y="730" width="872" height="212" rx="12"/>
-    <text class="rl" x="28" y="750">RIVER E. COLI · EVERY STRETCH, EVERY DAY</text>
-    <rect class="box" x="40" y="765" width="270" height="62" rx="8"/><text class="t" x="175" y="791" text-anchor="middle">River flow per stretch</text><text class="s" x="175" y="810" text-anchor="middle">Farmoor flow × catchment · m³/s</text>
-    <rect class="box" x="330" y="765" width="290" height="62" rx="8"/><text class="t" x="475" y="791" text-anchor="middle">Mix, carry downstream, die off</text><text class="s" x="475" y="810" text-anchor="middle">steps 2.2–2.4 · m/s, days</text>
-    <rect class="inp" x="660" y="765" width="210" height="62" rx="8"/><text class="t" x="765" y="791" text-anchor="middle">Port Meadow samples</text><text class="s" x="765" y="810" text-anchor="middle">EA · tunes the river model</text>
-    <path class="ar" d="M325,692 L448,762" marker-end="url(#ah)"/>
-    <path class="ar" d="M310,796 L327,796" marker-end="url(#ah)"/>
-    <path class="cal" d="M660,796 L623,796" marker-end="url(#ahc)"/>
-    <rect class="outb" x="180" y="862" width="240" height="60" rx="8"/><text class="t" x="300" y="887" text-anchor="middle">River E. coli</text><text class="s" x="300" y="906" text-anchor="middle">per 100 ml · step 2.4</text>
-    <rect class="outb" x="440" y="862" width="240" height="60" rx="8"/><text class="t" x="560" y="887" text-anchor="middle">Unsafe distance, time</text><text class="s" x="560" y="906" text-anchor="middle">km · hours · step 2.5</text>
-    <path class="ar" d="M440,827 L322,859" marker-end="url(#ah)"/>
-    <path class="ar" d="M510,827 L545,859" marker-end="url(#ah)"/>
+    <rect class="region" x="14" y="730" width="872" height="318" rx="12"/>
+    <text class="rl" x="28" y="1040">RIVER QUALITY · EVERY 100 M, EVERY DAY</text>
+    <path class="ar" d="M874,48 H892 V745 H310 V767" marker-end="url(#ah)"/><text class="lab" x="600" y="762" text-anchor="middle">monitor spill days (past)</text>
+    <rect class="box" x="60" y="770" width="300" height="62" rx="8"/><text class="t" x="210" y="796" text-anchor="middle">Spill day and spill rate</text><text class="s" x="210" y="815" text-anchor="middle">steps 2.1–2.2 · m³/s</text>
+    <rect class="box" x="520" y="770" width="300" height="62" rx="8"/><text class="t" x="670" y="796" text-anchor="middle">River flow per 100 m</text><text class="s" x="670" y="815" text-anchor="middle">EA gauge or runoff × area · step 2.3 · m³/s</text>
+    <path class="ar" d="M325,692 L232,767" marker-end="url(#ah)"/>
+    <rect class="box" x="270" y="868" width="360" height="64" rx="8"/><text class="t" x="450" y="893" text-anchor="middle">Dilute and decay downstream</text><text class="s" x="450" y="913" text-anchor="middle">r ÷ (Q + r) · 0.5 m/s · up to 40 km · steps 2.4–2.6</text>
+    <path class="ar" d="M210,832 L388,865" marker-end="url(#ah)"/>
+    <path class="ar" d="M670,832 L512,865" marker-end="url(#ah)"/>
+    <rect class="outb" x="110" y="966" width="300" height="60" rx="8"/><text class="t" x="260" y="991" text-anchor="middle">E. coli, swim advice</text><text class="s" x="260" y="1010" text-anchor="middle">per 100 ml · steps 2.5, 2.7</text>
+    <rect class="outb" x="490" y="966" width="300" height="60" rx="8"/><text class="t" x="640" y="991" text-anchor="middle">Ammonia, fish advice</text><text class="s" x="640" y="1010" text-anchor="middle">mg N/L · steps 2.6–2.7</text>
+    <path class="ar" d="M400,932 L292,963" marker-end="url(#ah)"/>
+    <path class="ar" d="M500,932 L608,963" marker-end="url(#ah)"/>
   </svg>
   </figure>
-  <div class="key"><span><i></i>water or data flows on</span><span><i class="c"></i>tuned to match measurements</span><span><i class="o"></i>shown on the website</span><span><i class="w"></i>sewage reaching the river</span></div>
+  <div class="key"><span><i></i>water or data flows on</span><span><i class="c"></i>tuned to match treated flow</span><span><i class="o"></i>shown on the website</span><span><i class="w"></i>sewage reaching the river</span></div>
 </section>
 
 <section id="physics">
@@ -270,53 +271,72 @@ html{scroll-behavior:smooth}
     <div class="eq">\[ P_{\text{shown}} = P_{\text{published}} + P_{\text{new rain}} - P_{\text{rain that fell}} \]</div>
     <div class="unit"><b>Unit</b>%, and the same shift for hours and m³</div>
   </div>
+
+  <div class="step"><div class="num">1.10</div><div>
+    <h3>The 7-day forecast</h3>
+    <p>Each works carries on from the end of the observed data, starting from its real soil, groundwater, sewer and tank state. Rain comes from all 51 members of the ECMWF weather ensemble at each rain gauge, and evaporation from the Open-Meteo forecast. Thames flow at Farmoor is held at its last reading. Each rain member is run 4 times with the inflow error, 204 runs per works, so the chance carries both the weather's uncertainty and the model's own.</p></div>
+    <div class="eq">\[ P(\text{spill on forecast day } d) = \frac{\text{runs that spill that day}}{51 \text{ rain members} \times 4} \]</div>
+    <div class="unit"><b>Unit</b>chance in %, spill-hours in hours, spill volume in m³</div>
+  </div>
 </section>
 
 <section id="river">
-  <h2>2 · Sewage in the river: E. coli</h2>
-  <p class="lede">Each day, for every stretch of river: how much water it carries, how fast it moves, and how much E. coli arrives from spills upstream on top of a background level.</p>
+  <h2>2 · River water quality: E. coli and ammonia</h2>
+  <p class="lede">The river page estimates what the river carries <strong>while a sewage spill upstream passes</strong>, every 100 m of river, for every day of the test year and the 7-day forecast. Each spilling works is mixed into the day's river flow and decays on the way downstream, on top of a background level. The source strengths and rates come from published studies; they are not fitted to local samples.</p>
 
   <div class="step"><div class="num">2.1</div><div>
-    <h3>How much water each stretch carries</h3>
-    <p>The Thames at Farmoor's measured flow, divided by its catchment, gives the water produced per km² of land. Each stretch gets that times the land that drains into it. That area comes from the river length upstream (0.62 km of river per km² of land), corrected to match 7 river gauges with published catchment areas.</p></div>
-    <div class="eq">\[ q_d = \frac{Q^{\text{Farmoor}}_d}{1608.6\ \text{km}^2} \qquad Q_{j,d} = q_d \times \text{area}_j \qquad \text{area}_j = \frac{\text{river length upstream}_j}{0.62} + \text{area outside the map} \]</div>
-    <div class="unit"><b>Unit</b>river flow in m³ per second</div>
+    <h3>Which works are spilling that day</h3>
+    <p>For past days, the works' own spill monitor. For forecast days, and past days with no usable monitor record, the physics model: a works counts as spilling if its chance is 50% or more.</p></div>
+    <div class="eq">\[ \text{spilling}_d = \begin{cases} \text{monitor recorded a spill} & \text{past days} \\ P(\text{spill}) \ge 0.5 & \text{forecast days} \end{cases} \]</div>
+    <div class="unit"><b>Unit</b>yes or no, per works and day</div>
   </div>
 
   <div class="step"><div class="num">2.2</div><div>
-    <h3>How fast the water moves</h3>
-    <p>About 0.3 m/s at a normal flow, faster when the river is high, kept between 0.05 and 1.2 m/s. Travel time is the distance down the works' river path divided by that speed.</p></div>
-    <div class="eq">\[ u_d = 0.3 \times \left(\frac{q_d}{q_{\text{median}}}\right)^{0.4} \qquad \tau = \frac{\text{distance downstream}}{u_d} \]</div>
-    <div class="unit"><b>Unit</b>speed in m/s, travel time in days (hours on the site)</div>
+    <h3>How fast a works spills</h3>
+    <p>Each works' typical spill rate in the physics model: its total modelled spill volume divided by its total modelled spill time over the test year. For works the model never spills, 0.37 × capacity, the typical ratio across works.</p></div>
+    <div class="eq">\[ r = \frac{\text{total spill volume (m}^3)}{\text{total spill-hours} \times 3600} \qquad \text{or} \qquad r = 0.37 \times \frac{\text{capacity (m}^3\text{/day)}}{86\,400} \]</div>
+    <div class="unit"><b>Unit</b>m³ per second</div>
   </div>
 
   <div class="step"><div class="num">2.3</div><div>
-    <h3>Mixing and dying off</h3>
-    <p>A spill's E. coli is its volume times the E. coli in storm sewage. That load is mixed into the day's river flow and dies off as it travels: 90% is gone after about 2.3 days. Spills from the last 6 days are still followed downstream. On the map, only works likely to spill that day (50% or more) count.</p></div>
-    <div class="eq">\[ \text{from one spill} = w \times \frac{V \times C_s \times e^{-k\,\tau}}{Q \times 86\,400 + V} \]</div>
-    <div class="unit"><b>Unit</b>E. coli per 100 ml</div>
-    <div class="note">\(V\) is the spill in m³, \(C_s \approx 2.5\) million per 100 ml, \(k = 1.0\) per day, 86,400 is seconds in a day. \(w\) spreads each spill's arrival over two days. The units cancel because 1 m³ is 10,000 × 100 ml on both the top and the bottom of the fraction.</div>
+    <h3>How much water each stretch carries</h3>
+    <p>The river is cut into 100 m segments. On the Thames, Cherwell, Evenlode, Thame, Ock and Glyme, a segment takes the day's flow at the nearest EA gauge. Elsewhere it takes the gauges' median runoff per km² that day times its catchment area, estimated as 1.99 km² of land per km of river upstream (from the Glyme, Ock and Ewelme gauges). Flow is never below 0.005 m³/s. Forecast days hold the last reading.</p></div>
+    <div class="eq">\[ Q = \text{flow at the nearest gauge} \qquad \text{(gauged rivers)} \]
+    \[ Q = \text{median runoff per km}^2 \times 1.99 \times \text{river length upstream (km)} \qquad \text{(elsewhere)} \]</div>
+    <div class="unit"><b>Unit</b>m³ per second</div>
   </div>
 
   <div class="step"><div class="num">2.4</div><div>
-    <h3>Add the background</h3>
-    <p>Rivers carry some E. coli even without spills: treated sewage, farms and wildlife. The model uses about 160 per 100 ml, a little lower at high flow and higher at low flow.</p></div>
-    <div class="eq">\[ C_{j,d} = 157 \times \left(\frac{q_d}{q_{\text{median}}}\right)^{-0.36} + \sum_{\text{spills arriving}} \text{from one spill} \]</div>
-    <div class="unit"><b>Unit</b>E. coli per 100 ml (cfu/100 ml)</div>
+    <h3>How long the sewage takes to arrive</h3>
+    <p>The distance along the river from the works to the segment, at a steady 0.5 m/s, the speed at the high flows when spills happen. Segments more than 40 km downstream are not counted.</p></div>
+    <div class="eq">\[ t = \frac{\text{distance downstream (m)}}{0.5\ \text{m/s}} \]</div>
+    <div class="unit"><b>Unit</b>hours (days in the decay formulas)</div>
   </div>
 
   <div class="step"><div class="num">2.5</div><div>
-    <h3>How far until the river is safe</h3>
-    <p>For the selected works, the furthest point downstream where background plus its spill is still above 900 per 100 ml, the inland bathing-water limit. The spill used is the one if it happens: the average volume divided by the chance.</p></div>
-    <div class="eq">\[ \text{unsafe distance} = \text{furthest } x \text{ with } C(x) > 900 \qquad \text{time until safe} = \frac{\text{unsafe distance}}{u_d} \]</div>
-    <div class="unit"><b>Unit</b>distance in km, time in hours</div>
+    <h3>E. coli in the river</h3>
+    <p>The spill's share of the water in the river, times the E. coli in storm sewage, shrinking as the bacteria die off on the way. They die off faster in summer sunlight. Every spilling works upstream adds its own share, on top of a background of 300 per 100 ml.</p></div>
+    <div class="eq">\[ E = 300 + \sum_{\text{spilling works upstream}} 1.5\times10^{6} \times \frac{r}{Q + r} \times e^{-k_E\, t} \]
+    \[ k_E = \begin{cases} 0.5 \text{ per day} & \text{Oct–Mar} \\ 1.1 \text{ per day} & \text{Apr–Sep} \end{cases} \]</div>
+    <div class="unit"><b>Unit</b>E. coli per 100 ml (cfu/100 ml)</div>
+    <div class="note">\(r/(Q+r)\) is the fraction of the river's water that is sewage. 1.5 million per 100 ml is the measured mean in storm overflows (Passerat et al. 2011); die-off rates from Servais et al. 2007.</div>
   </div>
 
   <div class="step"><div class="num">2.6</div><div>
-    <h3>How the river model is tuned</h3>
-    <p>The background (157, −0.36) and the strength of storm sewage (\(C_s\)) are adjusted until the model matches the Environment Agency's 78 E. coli samples at Port Meadow, 2023–26. Only 9 of those samples followed a recorded spill upstream.</p></div>
-    <div class="eq">\[ \text{minimise} \sum_{\text{samples}} \Big(\log_{10} C_{\text{model}} - \log_{10} C_{\text{sample}}\Big)^2 \]</div>
-    <div class="unit"><b>Unit</b>none (log₁₀ error: 0.3 ≈ a factor of 2)</div>
+    <h3>Ammonia in the river</h3>
+    <p>The same mixing, with ammonia in storm sewage (crude sewage diluted about 10 times by rainwater) and a slower loss as bacteria in the river turn it into nitrate. Background 0.04 mg/L, as measured in the Cherwell and the Thames.</p></div>
+    <div class="eq">\[ A = 0.04 + \sum_{\text{spilling works upstream}} 4 \times \frac{r}{Q + r} \times e^{-0.3\, t} \]</div>
+    <div class="unit"><b>Unit</b>mg of ammonia nitrogen per litre (mg N/L)</div>
+  </div>
+
+  <div class="step"><div class="num">2.7</div><div>
+    <h3>Advice when you hover a river</h3>
+    <ul><li><strong>Swimming:</strong> E. coli up to 500 per 100 ml is safe, up to 1,000 means take care, above 1,000 is not safe (inland bathing-water standards: Excellent 500, Good 1,000).</li>
+    <li><strong>Fish:</strong> ammonia up to 0.6 mg N/L is safe, up to 1.1 is stressful for sensitive fish, above 1.1 is harmful (Water Framework Directive standards for lowland rivers).</li></ul></div>
+    <div class="eq">\[ \text{swimming: } E \le 500 \to \text{safe}, \quad E \le 1000 \to \text{take care}, \quad \text{above} \to \text{not safe} \]
+    \[ \text{fish: } A \le 0.6 \to \text{safe}, \quad A \le 1.1 \to \text{stressful}, \quad \text{above} \to \text{harmful} \]</div>
+    <div class="unit"><b>Unit</b>a label per segment and day</div>
+    <div class="note">The standards judge a whole season of samples; here they are used as daily reference levels.</div>
   </div>
 </section>
 
@@ -394,9 +414,10 @@ html{scroll-behavior:smooth}
       <tr><td>Spill-hours</td><td>Average hours spilling that day</td><td class="u">hours</td></tr>
       <tr><td>Spill volume</td><td>Average sewage spilled that day (best for ranking works, not as an exact amount)</td><td class="u">m³</td></tr>
       <tr><td>Treatment capacity</td><td>Most the works treats in a storm</td><td class="u">m³/day</td></tr>
-      <tr><td>River E. coli</td><td>Background plus every spill arriving that day</td><td class="u">E. coli per 100 ml</td></tr>
-      <tr><td>Unsafe distance</td><td>How far downstream the river stays above 900 per 100 ml</td><td class="u">km</td></tr>
-      <tr><td>Time until safe</td><td>Travel time over that distance</td><td class="u">hours</td></tr>
+      <tr><td>Forecast chance of a spill</td><td>Share of 204 runs on the ECMWF rain ensemble, 7 days ahead</td><td class="u">%</td></tr>
+      <tr><td>River E. coli</td><td>Every 100 m, while a spill upstream passes (river page)</td><td class="u">E. coli per 100 ml</td></tr>
+      <tr><td>River ammonia</td><td>Every 100 m, while a spill upstream passes (river page)</td><td class="u">mg N/L</td></tr>
+      <tr><td>Swim and fish advice</td><td>Safe, take care or not safe; safe, stressful or harmful</td><td class="u">label</td></tr>
       <tr><td>Statistical chance</td><td>Backup model's chance of a spill</td><td class="u">%</td></tr>
       <tr><td>Watchlist counts</td><td>Under-treating and unexplained spill days</td><td class="u">days</td></tr>
     </tbody></table></div>
@@ -404,7 +425,7 @@ html{scroll-behavior:smooth}
 
 <section id="numbers">
   <h2>Fitted numbers</h2>
-  <p class="lede">Typical values across the 52 works (median, with the middle half in brackets), and the river model's fixed and fitted values.</p>
+  <p class="lede">Typical fitted values across the 52 works (median, with the middle half in brackets), and the river model's values, which come from published studies.</p>
   <div class="tablebox"><table>
     <thead><tr><th>Symbol</th><th>What it is</th><th>Value</th></tr></thead>
     <tbody>
@@ -417,20 +438,24 @@ html{scroll-behavior:smooth}
       <tr><td>\(C\)</td><td>Capacity</td><td class="v">1.07 × permitted flow</td></tr>
       <tr><td>\(V\)</td><td>Storm tank</td><td class="v">sourced at 5 works, else 2 h at capacity</td></tr>
       <tr><td>\(\sigma,\ \rho\)</td><td>Daily inflow error and carry-over</td><td class="v">≈ 13%, 0.78</td></tr>
-      <tr><td>\(C_s\)</td><td>E. coli in storm sewage</td><td class="v">2.5 million per 100 ml</td></tr>
-      <tr><td>\(B,\ \beta\)</td><td>Background E. coli and its flow response</td><td class="v">157 per 100 ml, −0.36</td></tr>
-      <tr><td>\(k\)</td><td>Die-off rate</td><td class="v">1.0 per day (90% in 2.3 days)</td></tr>
-      <tr><td>\(u\)</td><td>River speed at normal flow</td><td class="v">0.3 m/s</td></tr>
-      <tr><td>Limit</td><td>Inland bathing water, "sufficient"</td><td class="v">900 E. coli per 100 ml</td></tr>
+      <tr><td>E. coli in spills</td><td>Storm overflow mean (Passerat et al. 2011)</td><td class="v">1.5 million per 100 ml</td></tr>
+      <tr><td>Ammonia in spills</td><td>Crude sewage ~39 mg N/L diluted ~10×</td><td class="v">4 mg N/L</td></tr>
+      <tr><td>\(k_E\)</td><td>E. coli die-off (Servais et al. 2007)</td><td class="v">0.5 per day Oct–Mar, 1.1 Apr–Sep</td></tr>
+      <tr><td>Ammonia loss</td><td>Turned into nitrate in the river</td><td class="v">0.3 per day</td></tr>
+      <tr><td>Backgrounds</td><td>River without spills</td><td class="v">300 E. coli per 100 ml, 0.04 mg N/L</td></tr>
+      <tr><td>Speed</td><td>Travel speed at high flow</td><td class="v">0.5 m/s, up to 40 km</td></tr>
+      <tr><td>Catchment</td><td>Land per km of river upstream</td><td class="v">1.99 km²</td></tr>
+      <tr><td>Swim limits</td><td>Inland bathing water, Excellent / Good</td><td class="v">500 / 1,000 per 100 ml</td></tr>
+      <tr><td>Fish limits</td><td>Total ammonia, Good / Moderate</td><td class="v">0.6 / 1.1 mg N/L</td></tr>
     </tbody></table></div>
 </section>
 
 <div class="callout">
   <h2>In one line</h2>
-  <p>Rain (mm), evaporation (mm), river flow (m³/s) and treated flow (m³/day) go into a water balance of each works, which gives a chance of a spill (%) and a spill volume (m³). The river model turns that volume into E. coli per 100 ml along every river, and into how many kilometres and hours it takes for the river to fall back below the bathing limit.</p>
+  <p>Rain (mm, measured or forecast), evaporation (mm), river flow (m³/s) and treated flow (m³/day) go into a water balance of each works, which gives a chance of a spill (%) and a spill volume (m³). The river model takes the days each works spills and its typical spill rate (m³/s), mixes them into every 100 m of river, and gives E. coli per 100 ml and ammonia in mg N/L while the spill passes, with advice for swimmers and fish.</p>
 </div>
 
-<footer>Spillcast, OxHack 2026. Code: <code>scripts/model/wb.py</code>, <code>scripts/model/common.py</code>, <code>scripts/web/quality.py</code>, <code>web/ecoli.js</code>, <code>scripts/web/watchlist.py</code>. These are model estimates, not measurements.</footer>
+<footer>Spillcast, OxHack 2026. Code: <code>scripts/model/wb.py</code>, <code>scripts/model/11_forecast.py</code>, <code>scripts/model/common.py</code>, <code>scripts/web/quality.py</code> and <code>web/river.html</code>, <code>scripts/web/watchlist.py</code>. River parameters and sources: <code>docs/10-water-quality.md</code>. These are model estimates, not measurements.</footer>
 </main>
 </div>
 
