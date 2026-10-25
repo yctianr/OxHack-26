@@ -56,6 +56,16 @@
 .side li .bar i{display:block;height:100%;background:var(--bad);border-radius:2px}
 .side li .h{grid-column:1/-1;font-size:11px;color:var(--mute)}
 .side .none{padding:14px;font-size:12.5px;color:var(--mute)}
+.avoid{left:auto;right:16px;top:72px}
+.avoid li{grid-template-columns:1fr auto}
+.avoid li .why{grid-column:1/-1;font-size:11.5px}
+.avoid li .week{grid-column:1/-1;display:flex;gap:3px;margin:2px 0}
+.avoid li .week .d{font-style:normal;width:22px;height:16px;border-radius:3px;background:#e6f4ec;color:#2e8b57;font-size:9.5px;font-weight:600;display:grid;place-items:center}
+.avoid li .week .d.sw{background:var(--bad);color:#fff}.avoid li .week .d.fi{background:#8e63c9;color:#fff}
+.avoid li .why .sw{color:var(--bad);font-weight:600}.avoid li .why .fi{color:#6b3fa0;font-weight:600}
+.avoid .count b{color:var(--bad)}
+.tg.av[aria-pressed=true]{background:#fbe6e4;border-color:#f0c4c0;color:var(--bad)}
+.tg.av i{background:var(--bad)}
 .modes{display:flex;gap:4px;margin-top:8px;background:#eef2f3;border-radius:8px;padding:3px}
 .modes button{flex:1;border:0;background:none;border-radius:6px;padding:5px 10px;font:500 12.5px inherit;font-family:inherit;color:var(--mute);cursor:pointer;white-space:nowrap}
 .modes button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,40,50,.12)}
@@ -85,7 +95,9 @@
 <div class="panel toggles" role="group" aria-label="Heatmaps">
   <button class="tg ec" id="tg-e" aria-pressed="true"><i></i>E. coli</button>
   <button class="tg am" id="tg-a" aria-pressed="false"><i></i>Ammonia</button>
+  <button class="tg av" id="tg-v" aria-pressed="false"><i></i>Rivers to avoid</button>
 </div>
+<div class="panel side avoid" id="avoid" hidden aria-label="Rivers to avoid on this day"><div class="head"><div class="count" id="acount"></div><div class="sub" id="asub"></div></div><ol id="alist"></ol></div>
 <div class="panel time">
   <div class="trow"><div><button class="step" id="prev" aria-label="Previous day">‹</button><span class="date" id="date">–</span><button class="step" id="next" aria-label="Next day">›</button><span class="tag" id="tag"></span></div>
     <div class="legend" id="legend"></div></div>
@@ -122,6 +134,11 @@ const PW=Q.works.map(w=>PH.works[w.id]||null), DRV=PH.drivers;
 Q.works.forEach((w,i)=>w.i=i);
 const WS=Q.works.filter(w=>w.seg);   // shown on the map: works with flow data (the physics model covers them)
 const ASSESSED=new Set(WS.flatMap(w=>w.seg));   // river within 40 km downstream of a works; the rest is not assessed
+// a name for every assessed stretch: its river's name, or "Stream below <nearest works upstream>" for unnamed streams
+const OWNER=new Map();
+for(const w of WS) w.seg.forEach((j,k)=>{ const o=OWNER.get(j); if(!o||w.t[k]<o.t) OWNER.set(j,{w,t:w.t[k]}); });
+const segName=j=>Q.names[Q.seg.name[j]]||`Stream below ${OWNER.get(j).w.name}`;
+let showV=false;
 function rng(seed){ return ()=>{ seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function rainDay(pw,d){ const [a,b,w1]=pw.g; return DRV.rain[a][d].map((x,h)=>w1*x+(1-w1)*DRV.rain[b][d][h]); }
 function physDay(pw,d,R,V,C){ // 200 runs with a daily inflow error; storm tank V (m3), capacity C (m3/h); R = rain that day (mm) or null
@@ -145,8 +162,8 @@ const baseV=i=>PW[i].prm.V, baseC=i=>PW[i].prm.C;
 const runWorks=(i,edited=true)=>{ const e=edited&&EDIT[i]||{}; return physDay(PW[i],day,rainSet,e.V??baseV(i),baseC(i)*(e.Cx??1)); };
 function scenarioAll(){ SC=Q.works.map((w,i)=>PW[i]?runWorks(i):null); }
 // spill state and rate used for the river: real mode = monitors (past) / forecast; scenario = the rerun model
-const spills=i=>scenario?!!(SC[i]&&SC[i].p>=0.5):!!(Q.works[i].seg&&Q.works[i].spill[day]);
-const rateOf=i=>scenario&&SC[i]&&SC[i].h>0?SC[i].v/SC[i].h/3600:Q.works[i].rate;
+const spills=(i,d=day,real=false)=>scenario&&!real?!!(SC[i]&&SC[i].p>=0.5):!!(Q.works[i].seg&&Q.works[i].spill[d]);
+const rateOf=(i,real=false)=>scenario&&!real&&SC[i]&&SC[i].h>0?SC[i].v/SC[i].h/3600:Q.works[i].rate;
 // spill volume (m3) and hours for the sidebar: scenario run; monitor hours x modelled rate on past days; physics forecast otherwise
 function spillSize(i){ const w=Q.works[i];
   if(scenario) return SC[i]?{v:SC[i].v,h:SC[i].h,est:'scenario'}:null;
@@ -155,11 +172,11 @@ function spillSize(i){ const w=Q.works[i];
 
 // ---- concentrations for one day: background + every spilling works upstream, diluted and decaying with travel time ----
 const E=new Float64Array(N), A=new Float64Array(N), FLOW=new Float64Array(N);
-function compute(d){
+function compute(d,real=false){   // real: monitors / forecast even in scenario mode
   for(let j=0;j<N;j++){ const r=Q.seg.ref[j]; FLOW[j]=Math.max(r>=0?Q.flow[r][d]:Q.qspec[d]*Q.seg.area[j],P.min_flow); }
   E.fill(P.ecoli_bg); A.fill(P.ammonia_bg);
   const mo=+D[d].slice(5,7), ke=mo>=4&&mo<=9?P.ecoli_k_summer:P.ecoli_k_winter;   // E. coli dies off faster in summer light
-  Q.works.forEach((w,wi)=>{ if(!w.seg||!spills(wi)) return; const rate=rateOf(wi);
+  Q.works.forEach((w,wi)=>{ if(!w.seg||!spills(wi,d,real)) return; const rate=rateOf(wi,real);
     for(let i=0;i<w.seg.length;i++){ const j=w.seg[i], t=w.t[i]/24, f=rate/(FLOW[j]+rate);
       E[j]+=P.ecoli_source*f*Math.exp(-ke*t); A[j]+=P.ammonia_source*f*Math.exp(-P.ammonia_k*t); } });
 }
@@ -224,7 +241,7 @@ function render(){
   $('date').textContent=new Date(D[day]+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   $('tag').className='tag '+(fc||scenario?'fc':'past'); $('tag').textContent=scenario?'My scenario':fc?(day===NOBS?'Today · forecast':'Forecast'):'Past';
   if(scenario) paintRain(); if(picked>=0) paintCard();
-  paintSide();
+  paintSide(); paintAvoid();
   $('legend').innerHTML=`<span><i class="dot" style="background:#c2362f"></i>spilling <i class="dot" style="background:#263238;margin-left:6px"></i>not spilling</span>`+(showE||showA?`<span><i class="line"></i>not assessed</span>`:'')+(showE?`<span>E. coli<span class="ramp" style="background:linear-gradient(90deg,#3aa76d 0 30%,#f2b134 45%,#e4572e 70%,#8e1b3a)"></span>unsafe from ${P.swim_bad.toLocaleString('en-GB')}/100 mL</span>`:'')+
     (showA?`<span>Ammonia<span class="ramp" style="background:linear-gradient(90deg,#3aa76d 0 30%,#9b7ad0 45%,#5b2a86 75%,#2d0f4a)"></span>harmful from ${P.fish_bad} mg/L</span>`:'');
   if(hover) onHover(hover);
@@ -270,6 +287,49 @@ function paintSide(){
   $('slist').querySelectorAll('li').forEach(li=>li.onclick=()=>{ const w=Q.works[+li.dataset.i]; flyTo(w);
     if(scenario) onClick({object:w,layer:{id:'pts'}}); });
 }
+
+// ---- right sidebar: rivers to avoid over the 7 forecast days (the official forecast; computed once) ----
+const FDAYS=[...Array(D.length-NOBS).keys()].map(k=>NOBS+k);
+let WEEK=null;
+function weekSummary(){
+  const G=new Map();
+  for(const d of FDAYS){
+    compute(d,true);
+    const spillers=WS.filter(w=>spills(w.i,d,true));
+    for(const j of ASSESSED){ const bs=E[j]>=P.swim_bad, bf=A[j]>=P.fish_bad; if(!bs&&!bf) continue;
+      const k=segName(j); let g=G.get(k); if(!g) G.set(k,g={name:k,days:FDAYS.map(()=>0),km:0,peak:0,peakA:0,segs:new Set(),from:new Set(),kmd:{}});
+      const di=d-NOBS; g.days[di]=Math.max(g.days[di],bs?2:1); g.kmd[d]=(g.kmd[d]||0)+bs; g.peak=Math.max(g.peak,E[j]); g.peakA=Math.max(g.peakA,A[j]); g.segs.add(j); }
+    for(const w of spillers) for(const j of w.seg){ if(E[j]<P.swim_bad&&A[j]<P.fish_bad) continue; const g=G.get(segName(j)); if(g) g.from.add(w.name); }
+  }
+  for(const g of G.values()) g.km=Math.max(0,...Object.values(g.kmd))/10;
+  compute(day);   // restore the map's day
+  return [...G.values()].sort((a,b)=>b.days.filter(x=>x===2).length-a.days.filter(x=>x===2).length||b.km-a.km);
+}
+const wd=d=>new Date(D[d]+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short'});
+function spans(days){ // "Sun–Tue, Thu" from the swim-unsafe days
+  const out=[]; let i=0;
+  while(i<days.length){ if(days[i]!==2){i++;continue;} let j=i; while(j+1<days.length&&days[j+1]===2) j++;
+    out.push(i===j?wd(FDAYS[i]):`${wd(FDAYS[i])}–${wd(FDAYS[j])}`); i=j+1; }
+  return out.join(', '); }
+function paintAvoid(){
+  $('avoid').hidden=!showV||picked>=0;
+  if(!showV) return;
+  if(!FDAYS.length){ $('acount').textContent='No forecast loaded'; $('asub').textContent=''; $('alist').innerHTML=''; return; }
+  if(!WEEK) WEEK=weekSummary();
+  const rows=WEEK, first=fmtD(D[FDAYS[0]]), last=fmtD(D[FDAYS.at(-1)]);
+  $('acount').innerHTML=rows.length?`<b>${rows.length}</b> river${rows.length>1?'s':''} to avoid this week`:'No rivers to avoid this week';
+  $('asub').textContent=`${first} – ${last} · physics forecast${Q.issued?', issued '+Q.issued:''}${scenario?' (your scenario changes aren\'t included)':''}`;
+  const box=(x,k)=>`<i class="d ${x===2?'sw':x===1?'fi':''}" title="${wd(FDAYS[k])}: ${x===2?'not safe to swim':x===1?'harmful to fish':'safe'}">${wd(FDAYS[k])[0]}</i>`;
+  $('alist').innerHTML=rows.map((r,k)=>{ const sw=spans(r.days);
+    return `<li data-k="${k}"><span class="n">${r.name}</span><span class="v">${r.km?r.km.toFixed(r.km<1?1:0)+' km':''}</span>
+    <span class="week">${r.days.map(box).join('')}</span>
+    <span class="why">${sw?`<span class="sw">Avoid ${sw}</span> · up to ${fmtE(r.peak)} E. coli`:''}${r.peakA>=P.fish_bad?`${sw?'<br>':''}<span class="fi">Harmful to fish</span> · up to ${fmtA(r.peakA)} mg/L`:''}</span>
+    <span class="h">${r.from.size?'From '+[...r.from].slice(0,3).join(', ')+(r.from.size>3?` and ${r.from.size-3} more`:''):''}</span></li>`; }).join('');
+  $('alist').querySelectorAll('li').forEach(li=>li.onclick=()=>{ const r=rows[+li.dataset.k], xy=[...r.segs].map(j=>Q.seg.xy[j]);
+    const lon=xy.reduce((a,c)=>a+c[0],0)/xy.length, lat=xy.reduce((a,c)=>a+c[1],0)/xy.length;
+    const fd=r.days.findIndex(x=>x>0); if(fd>=0) go(FDAYS[fd]); flyTo({lon,lat:lat+0.01}); });
+}
+const fmtD=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
 
 // ---- scenario: mode, rainfall, the works card ----
 function setMode(s_){ scenario=s_; $('m-real').setAttribute('aria-pressed',String(!s_)); $('m-scn').setAttribute('aria-pressed',String(s_));
@@ -318,7 +378,7 @@ sl.oninput=()=>{ day=+sl.value; render(); };
 const go=d=>{ day=Math.max(0,Math.min(D.length-1,d)); sl.value=day; render(); };
 $('prev').onclick=()=>go(day-1); $('next').onclick=()=>go(day+1);
 const tg=(id,get,set)=>{ $(id).onclick=()=>{ set(!get()); $(id).setAttribute('aria-pressed',String(get())); render(); }; };
-tg('tg-e',()=>showE,v=>showE=v); tg('tg-a',()=>showA,v=>showA=v);
+tg('tg-e',()=>showE,v=>showE=v); tg('tg-a',()=>showA,v=>showA=v); tg('tg-v',()=>showV,v=>showV=v);
 const pct=i=>(i/(D.length-1)*100).toFixed(2)+'%', mon=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{month:'short'});
 let ticks=`<span class="l" style="left:0">${mon(D[0])} ${D[0].slice(0,4)}</span>`;
 D.forEach((d,i)=>{ if(i>0&&d.slice(8)==='01'&&['01','04','07'].includes(d.slice(5,7))) ticks+=`<span style="left:${pct(i)}">${mon(d)}</span>`; });

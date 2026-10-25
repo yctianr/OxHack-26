@@ -35,6 +35,8 @@ A clean 2D map (Esri Light Gray basemap, deck.gl) of the river network and the 5
 
 A sidebar counts the works spilling on the chosen day and ranks them by volume (past days: monitor hours × the works' modelled spill rate; forecast: the physics forecast; scenario: your run); clicking one flies the map to it.
 
+A **Rivers to avoid** button opens a right sidebar summarising the 7 forecast days: every river with a stretch not safe to swim in (E. coli from 235 per 100 mL) or harmful to fish (ammonia from 0.5 mg/L), with a day-by-day strip, "Avoid Sun–Wed", the peak level, the longest unsafe length and the works responsible; rivers with the most unsafe days come first, and clicking one flies there on its first unsafe day. Unnamed streams are named after the works just upstream. It always uses the official forecast, not scenario changes.
+
 Two modes:
 - **Forecast & past:** monitors on past days, the physics forecast on forecast days.
 - **My scenario:** every works is rerun in the browser with the physics model for the chosen day, from its soil, groundwater and storm-tank state that morning. A rainfall slider sets the day's rain everywhere ("As it fell" restores it). Clicking a discharge point opens a card to change its storm-tank volume and treatment capacity, with that day's chance of a spill, spill-hours and volume as built vs with your change; the rivers update. Changes persist across days until reset, so you can step through a wet spell with a bigger tank.
