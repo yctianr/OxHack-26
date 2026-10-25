@@ -20,6 +20,8 @@
 .trow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .trow>div:first-child{flex:none;white-space:nowrap}
 .date{font-size:16px;font-weight:650;display:inline-block;min-width:150px;text-align:center}
+.play{border:0;width:26px;height:26px;border-radius:50%;background:#eef2f3;color:var(--ink);font-size:11px;cursor:pointer;margin-right:6px;vertical-align:1px}
+.play:hover{background:#e3e8ea}.play[aria-pressed=true]{background:#263238;color:#fff}
 .step{border:0;background:none;font-size:20px;line-height:1;color:var(--mute);cursor:pointer;padding:0 6px;vertical-align:-1px}.step:hover{color:var(--ink)}
 .tag{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:8px;vertical-align:2px}
 .tag.past{background:#eef2f3;color:var(--mute)}.tag.fc{background:#e3f1f6;color:var(--accent)}
@@ -105,7 +107,7 @@
 </div>
 <div class="panel side avoid" id="avoid" hidden aria-label="Rivers to avoid on this day"><div class="head"><div class="count" id="acount"></div><div class="sub" id="asub"></div></div><ol id="alist"></ol></div>
 <div class="panel time">
-  <div class="trow"><div><button class="step" id="prev" aria-label="Previous day">‹</button><span class="date" id="date">–</span><button class="step" id="next" aria-label="Next day">›</button><span class="tag" id="tag"></span></div>
+  <div class="trow"><div><button class="play" id="play" aria-pressed="false" aria-label="Play through the days">▶</button><button class="step" id="prev" aria-label="Previous day">‹</button><span class="date" id="date">–</span><button class="step" id="next" aria-label="Next day">›</button><span class="tag" id="tag"></span></div>
     <div class="legend" id="legend"></div></div>
   <canvas id="hist" aria-hidden="true"></canvas>
   <input id="day" type="range" min="0" max="0" value="0" aria-label="Day">
@@ -397,9 +399,16 @@ $('cardx').onclick=()=>{ picked=-1; $('card').hidden=true; render(); };
 // ---- controls ----
 const sl=$('day'); sl.max=D.length-1; sl.value=day;
 sl.style.background='none';
-sl.oninput=()=>{ day=+sl.value; render(); };
+sl.oninput=()=>{ stop(); day=+sl.value; render(); };
 const go=d=>{ day=Math.max(0,Math.min(D.length-1,d)); sl.value=day; render(); };
-$('prev').onclick=()=>go(day-1); $('next').onclick=()=>go(day+1);
+$('prev').onclick=()=>{ stop(); go(day-1); }; $('next').onclick=()=>{ stop(); go(day+1); };
+// play: step through the days (from the start if at the end), stopping at the last day
+let timer=null;
+function stop(){ if(!timer) return; clearInterval(timer); timer=null; $('play').textContent='▶'; $('play').setAttribute('aria-pressed','false'); }
+$('play').onclick=()=>{ if(timer) return stop();
+  if(day>=D.length-1) go(0);
+  $('play').textContent='❚❚'; $('play').setAttribute('aria-pressed','true');
+  timer=setInterval(()=>{ if(day>=D.length-1) return stop(); go(day+1); }, matchMedia('(prefers-reduced-motion: reduce)').matches?600:180); };
 const tg=(id,get,set)=>{ $(id).onclick=()=>{ set(!get()); $(id).setAttribute('aria-pressed',String(get())); render(); }; };
 tg('tg-e',()=>showE,v=>showE=v); tg('tg-a',()=>showA,v=>showA=v); tg('tg-v',()=>showV,v=>showV=v);
 const pct=i=>(i/(D.length-1)*100).toFixed(2)+'%', mon=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{month:'short'});
