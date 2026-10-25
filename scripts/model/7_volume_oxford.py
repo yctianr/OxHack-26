@@ -6,7 +6,8 @@ Inflow model (daily, log scale):  log I_d = a0 + a1*log(Farmoor flow) + a2*F_d +
 Spill volume on a spill day = E[I - TDV | I >= TDV], drawn from the truncated conditional distribution.
 Uncertainty: weekly block bootstrap refits of (a, s), then truncated draws. Train Nov 2022 - Sep 2024; the
 test check is how well modelled inflow separates spill from non-spill days after Sep 2024.
-Known gaps (docs/11 §7): storm-tank fill and pump-back are not modelled; FFT is not used as a lower bound."""
+Known gaps (docs/archive/11-system-review.md §7): storm-tank fill and pump-back are not modelled; FFT is not used as a lower bound.
+Superseded by the physics water balance (docs/02-physical-model.md), which models the storm tank."""
 import os
 import warnings
 import numpy as np

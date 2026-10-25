@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Spillcast · Rain scenarios</title>
+<meta name="description" content="Pick a day and change the rain at one overflow: the 3D map shows how the chance of a sewage spill, and the sewage pressure downstream, responds.">
+<style>
+/* Layout and controls follow Keira's UI-first-draft.html; the map is the 3D deck.gl map from index.html. */
+:root{color-scheme:light;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#21392e;background:#f8faf8}*{box-sizing:border-box}body{margin:0;padding:16px}
+.app{max-width:1280px;margin:auto;border:1px solid #d8e2da;border-radius:16px;background:#fff;overflow:hidden}
+.header,.controls{padding:16px 20px;border-bottom:1px solid #d8e2da;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.header h1{font-size:20px;margin:0}.sub,.small{font-size:12px;color:#677a6b}.header p{margin:4px 0 0}
+.pill{border:1px solid #d8e2da;border-radius:20px;padding:6px 10px;font-size:12px;white-space:nowrap;color:#21392e;text-decoration:none}a.pill:hover{border-color:#288267}
+.hright{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.controls{flex-wrap:wrap}.control{flex:1;min-width:240px}.control h2{font-size:14px;margin:0 0 4px}.value{font-size:18px;font-weight:750;white-space:nowrap}
+input[type=range]{width:100%;accent-color:#247e65;cursor:pointer}input[type=range]:disabled{opacity:.4;cursor:not-allowed}
+.ticks{display:flex;justify-content:space-between;color:#758679;font-size:10px}
+.ticks.at{position:relative;display:block;height:13px}.ticks.at span{position:absolute;transform:translateX(-50%);white-space:nowrap}.ticks.at span:first-child{transform:none}
+.switch{border:0;width:45px;height:26px;border-radius:16px;padding:3px;background:#a0aaa2;cursor:pointer;flex:none}.switch.on{background:#267c61}.switch span{display:block;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}.switch.on span{transform:translateX(19px)}
+.summary{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.summary span{font-size:12px}
+.bullet{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;background:#208650}.bullet.red{background:#c93a3a}.bullet.grey{background:#8c9696}.bullet.amber{background:#f0a33a}
+.body{display:grid;grid-template-columns:minmax(0,1fr) 330px}
+.map{position:relative;min-width:0;height:clamp(440px,66vh,780px);background:radial-gradient(ellipse at 50% 40%,#132226 0%,#0b1315 70%)}
+#deck{position:absolute;inset:0}
+.cams{position:absolute;right:12px;top:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:75%}
+.cam{background:rgba(255,255,255,.93);border:1px solid #cad9cc;color:#21392e;border-radius:7px;padding:5px 9px;font:500 12px system-ui,sans-serif;cursor:pointer}.cam:hover{border-color:#288267}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:#c9d6cf;font-size:13px;pointer-events:none}
+.mapnote{position:absolute;left:12px;bottom:10px;color:#b9c8c1;font-size:11px;pointer-events:none;text-shadow:0 1px 2px #000}
+.tip{font:12px system-ui,sans-serif;line-height:1.4}
+.side{border-left:1px solid #d8e2da;padding:13px;min-width:0}.side h3{margin:0 0 10px;font-size:15px}
+.search{width:100%;padding:10px;border:1px solid #d8e2da;border-radius:8px;margin-bottom:10px;font:inherit}
+.list{max-height:250px;overflow:auto;display:grid;gap:5px}
+.site{border:1px solid #e0e8e0;background:#fff;color:#23392c;border-radius:7px;padding:8px;cursor:pointer;display:flex;align-items:center;gap:7px;text-align:left;font:12px system-ui,sans-serif}
+.site.sel{border-color:#288267;background:#f0f8f1}.site i{width:11px;height:11px;border-radius:50%;flex:none}.site span{flex:1;min-width:0}.site strong{white-space:nowrap}
+.detail{margin-top:14px;border:1px solid #d8e2da;border-radius:10px;background:#f7faf7;padding:13px}.detail h3{margin:3px 0 5px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
+.stat{padding:10px;border:1px solid #e0e8e0;background:#fff;border-radius:7px}.stat strong{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.status{font-size:18px;font-weight:800}.status.red{color:#c93a3a}.status.green{color:#208650}.status.grey{color:#677a6b}
+.foot{padding:13px 18px;border-top:1px solid #d8e2da;color:#667b6b;font-size:12px;line-height:1.5}.foot a{color:#247e65}
+.gradient{height:12px;border-radius:12px;background:linear-gradient(90deg,#3c8ea6,#f0a33a,#ff5d4a)}
+.legend{padding:14px 18px;border-top:1px solid #d8e2da}
+.reset{border:1px solid #cad9cc;background:#fff;border-radius:7px;padding:6px 10px;cursor:pointer;font:12px system-ui,sans-serif;color:#21392e}
+.reset:disabled{opacity:.5;cursor:default}
+.hidden{display:none!important}
+button:focus-visible,input:focus-visible{outline:2px solid #247e65;outline-offset:1px}
+@media(max-width:830px){body{padding:8px}.controls>*{flex:1 1 100%;min-width:0}.value{white-space:normal;text-align:right;font-size:16px}.cams{max-width:calc(100% - 24px)}.body{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid #d8e2da}.list{max-height:180px}.header{flex-wrap:wrap}.map{height:58vh}}
+@media (prefers-reduced-motion:reduce){.switch span{transition:none}}
+</style></head>
+<body><main class="app">
+<header class="header"><div><h1>Spillcast</h1><p class="sub">Rain scenarios for sewage overflows around Oxford</p></div>
+  <div class="hright"><span class="pill" id="pillCount">Test year</span><a class="pill" href="./">Inspect works →</a></div></header>
+
+<section class="controls">
+  <div class="control">
+    <div style="display:flex;justify-content:space-between;gap:12px"><div><h2>Day</h2><div class="sub">Chance of a spill given the rain that fell: physics water balance, statistical model as backup</div></div><strong id="dayLabel" class="value">–</strong></div>
+    <input id="day" type="range" min="0" max="0" value="0" aria-label="Day">
+    <div class="ticks at" id="dayTicks"></div>
+  </div>
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;justify-content:space-between"><div><strong>River sewage glow</strong><div class="sub">Spilled sewage from treatment works upstream (physics model)</div></div>
+      <button id="toggle" class="switch on" role="switch" aria-checked="true" aria-label="Toggle river sewage glow"><span></span></button></div>
+    <div class="summary" style="margin-top:15px"><span><i class="bullet red"></i><b id="nLikely">0</b> likely to spill</span><span><i class="bullet"></i><b id="nUnlikely">0</b> unlikely</span><span><i class="bullet amber"></i><b id="nObs">0</b> spilled (monitors)</span></div>
+  </div>
+</section>
+
+<div class="body">
+  <div>
+    <div class="map">
+      <div id="deck" aria-label="3D map of sewage overflows and rivers around Oxford"></div>
+      <div class="loading" id="loading">Loading terrain and rivers…</div>
+      <div class="cams" role="group" aria-label="Camera">
+        <button class="cam" id="cam-all">Whole area</button><button class="cam" id="cam-city">Oxford</button>
+        <button class="cam" id="cam-pm">Port Meadow</button><button class="cam" id="cam-sand">Sandford</button>
+        <button class="cam" id="tog3d" aria-pressed="true">2D</button>
+      </div>
+      <div class="mapnote">Drag to pan · right-drag or two fingers to tilt · height ×3</div>
+    </div>
+    <div class="legend">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin-bottom:12px"><span><i class="bullet red"></i>Likely to spill (50%+)</span><span><i class="bullet"></i>Unlikely</span><span><i class="bullet grey"></i>Not modelled</span></div>
+      <strong style="font-size:12px">Spilled sewage per km of river upstream (physics model; relative, not measured water quality)</strong>
+      <div class="gradient" style="margin-top:7px"></div>
+      <div class="ticks" style="margin-top:5px"><span>trace</span><span>moderate</span><span>heavy</span></div>
+    </div>
+  </div>
+
+  <aside class="side">
+    <h3>Overflows <span id="count" class="sub" style="float:right"></span></h3>
+    <input id="search" class="search" type="search" placeholder="Search overflows..." aria-label="Search overflows">
+    <div class="list" id="list"></div>
+    <div id="empty" class="detail"><strong>Select an overflow</strong><p class="sub">Choose a marker or a name to see its chance of spilling, what its monitor recorded, and a rainfall slider for that day.</p></div>
+    <div id="details" class="detail hidden">
+      <div style="display:flex;justify-content:space-between;gap:10px"><div><div class="sub">SELECTED OVERFLOW</div><h3 id="site-name"></h3><div id="site-water" class="sub"></div></div><button id="close" class="reset" aria-label="Close details">✕</button></div>
+      <div id="status" class="status" style="margin-top:12px" aria-live="polite"></div>
+      <div class="detail-grid">
+        <div class="stat"><div class="sub">Chance of a spill</div><strong id="st-chance"></strong><span class="sub" id="st-chance-sub"></span></div>
+        <div class="stat"><div class="sub">Monitor recorded</div><strong id="st-obs"></strong><span class="sub">that day</span></div>
+        <div class="stat"><div class="sub">Spill volume</div><strong id="st-vol"></strong><span class="sub">m³ that day, physics model</span></div>
+        <div class="stat"><div class="sub">Spill-hours</div><strong id="st-hours"></strong><span class="sub">that day, physics model</span></div>
+        <div class="stat"><div class="sub">Statistical model</div><strong id="st-stat"></strong><span class="sub">backup, same day</span></div>
+        <div class="stat"><div class="sub">Storm tank</div><strong id="st-tank"></strong><span class="sub" id="st-tank-sub"></span></div>
+      </div>
+      <p id="vol-note" class="small"></p>
+      <div id="rainBox" style="border-top:1px solid #d8e2da;margin-top:14px;padding-top:13px">
+        <div style="display:flex;justify-content:space-between"><strong>Rainfall scenario</strong><b id="rain-mm">–</b></div>
+        <div class="sub" id="rain-sub">24-hour rainfall at this overflow</div>
+        <input id="rain" type="range" min="0" max="100" step="0.1" value="0" aria-label="Rainfall at the selected overflow, in millimetres">
+        <div class="ticks"><span>0 mm</span><span>25</span><span>50</span><span>75</span><span>100 mm</span></div>
+        <button id="reset" class="reset" style="margin-top:12px">Reset to the rain that fell</button>
+        <p id="explanation" class="small"></p>
+      </div>
+    </div>
+  </aside>
+</div>
+<footer class="foot"><strong>Model estimates, not measurements.</strong> The main model is a physics water balance of each treatment works: foul flow, rain off hard and saturated ground, and groundwater flow into the sewer; the works treats up to its capacity, a storm tank holds the excess, and only what the tank cannot hold spills. It is fitted only to each works' daily treated flow, never to its spill records, and scored on a test year it never saw (Oct 2025 to Oct 2026). Storm tanks hold 2 hours of flow at capacity unless a source states their size. Overflows with no treated-flow data use a statistical model of rain and wet ground as the backup. The rainfall slider reruns that day of the model with more or less rain. No public data measures spill volume, so these are estimates, and the glow is relative, not water quality. Data: Thames Water EDM, Environment Agency rain and flow gauges and LIDAR, OS Open Rivers (contains OS data © Crown copyright). Built at OxHack 2026. <a href="./">The regulator watchlist is on the main page.</a></footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/deck.gl@9.4.0/dist.min.js"></script>
+<script>
+(async function(){
+'use strict';
+const BOUNDS=[-1.6700466447550568,51.49514987630958,-0.8215746622899808,52.00396542166687];
+const EX=3;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const [O,RV,WF,VF]=await Promise.all(['data/outfalls.json','data/rivers.json','data/whatif.json','data/physics.json'].map(u=>fetch(u).then(r=>r.json())));
+const DATES=O.dates, SITES=O.sites, WI=WF.sites;
+const $=id=>document.getElementById(id);
+let day=DATES.indexOf('2026-01-16'); if(day<0) day=DATES.length-1;
+let sel=-1, heatOn=true, is3d=true, rainOverride=null;   // rainOverride: mm at the selected overflow, this day only
+
+// --- statistical model (backup): one overflow on one day, rain what-if through its rain store ---
+const sig=z=>1/(1+Math.exp(-z));
+function peakStore(f0,R,tau){ // max over the day of the rain store, starting at f0 with R mm spread evenly
+  const a=Math.exp(-1/tau), r=R/24; return Math.max(a*f0+tau*r*(1-a), a**24*f0+tau*r*(1-a**24)); }
+function statChance(i,withOverride=true){
+  const s=SITES[i], w=WI[s.id]; if(!w) return null;
+  const base=s.pe&&s.pe[day]!=null?s.pe[day]:sig(w.z[day]);
+  if(!withOverride||i!==sel||rainOverride==null) return base;
+  return sig(w.z[day]+w.k*(peakStore(w.f0[day],rainOverride,w.tau)-peakStore(w.f0[day],w.r[day],w.tau))); }
+// --- physics water balance (main model): rerun one day of a works from its start-of-day state with different rain ---
+const PW=SITES.map(s=>VF.works[s.id]||null), DRV=VF.drivers;
+function rng(seed){ return ()=>{ seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function rainDay(w,d){ const [a,b,w1]=w.g; return DRV.rain[a][d].map((x,h)=>w1*x+(1-w1)*DRV.rain[b][d][h]); }
+function physDay(w,d,R){ // 200 runs, each with one daily inflow error (as in scripts/web/physics.py): [chance, spill-hours, m3]
+  const m=w.prm, act=rainDay(w,d), tot=act.reduce((a,x)=>a+x,0), rain=act.map(x=>tot>0.05?x*R/tot:R/24);
+  const af=Math.exp(-1/m.tf), ag=m.mode===0?Math.exp(-1/(m.p1*24)):0, rnd=rng(1), n=200;
+  let sp=0, hrs=0, vol=0;
+  for(let j=0;j<n;j++){
+    const e=Math.sqrt(-2*Math.log(rnd()||1e-12))*Math.cos(2*Math.PI*rnd())*m.sig, mult=Math.exp(e-m.sig*m.sig/2);
+    let [Dd,G,r,tank]=w.s[d], on=false;
+    for(let t=0;t<rain.length;t++){
+      r=af*r+(1-af)*rain[t];
+      Dd+=DRV.pet[d][t]*(1-Dd/m.p2)-rain[t]; let rech=0; if(Dd<0){rech=-Dd;Dd=0;} else if(Dd>m.p2) Dd=m.p2;
+      let inf; if(m.mode===0){G=ag*G+rech; inf=m.k*G;} else inf=m.k*Math.max(0,DRV.wet[d][t]-m.p1);
+      const q=(m.F*(1+0.3*Math.cos(2*Math.PI*(DRV.lh[d][t]-12)/24))+inf+10*(m.A+m.As*(1-Dd/m.p2))*r)*mult;
+      if(q>m.C){ const ex=q-m.C; if(ex<=m.V-tank) tank+=ex; else { const x=ex-(m.V-tank); tank=m.V; if(x>1e-6){on=true;hrs++;vol+=x;} } }
+      else tank-=Math.min(tank,m.C-q);
+    }
+    sp+=on; }
+  return [sp/n,hrs/n,vol/n]; }
+let WHAT=null;   // physics what-if for the selected works: [chance, spill-hours, m3], moved from the published values
+function whatIf(){ WHAT=null; const w=sel>=0?PW[sel]:null; if(!w||rainOverride==null) return;
+  const a=physDay(w,day,rainDay(w,day).reduce((x,y)=>x+y,0)), b=physDay(w,day,rainOverride);
+  WHAT=[Math.min(1,Math.max(0,w.p[day]+b[0]-a[0])), Math.max(0,w.h[day]+b[1]-a[1]), Math.max(0,w.v[day]+b[2]-a[2])]; }
+function chance(i,withOverride=true){ const w=PW[i]; if(!w) return statChance(i,withOverride); return withOverride&&i===sel&&WHAT?WHAT[0]:w.p[day]; }
+const volOf=(i,withOverride=true)=>{ const w=PW[i]; if(!w) return null; return withOverride&&i===sel&&WHAT?WHAT[2]:w.v[day]; };
+const hoursOf=i=>{ const w=PW[i]; if(!w) return null; return i===sel&&WHAT?WHAT[1]:w.h[day]; };
+const modelled=SITES.map((s,i)=>!!PW[i]||!!WI[s.id]);
+let CH=SITES.map((_,i)=>chance(i));
+
+// --- river glow: physics-model spill volume from the works upstream, per km of river upstream (a stand-in for dilution) ---
+const HASV=RV.map(r=>r.u.some(i=>PW[i]));
+const VK=VF.scale.K, VMAX=Math.log10(1+VF.scale.S99/VK);
+const upVol=r=>{ let s=0; for(const i of r.u){const v=volOf(i); if(v) s+=v;} return s; };
+function pressure(r){ if(!heatOn||!r.u.length) return 0; const s=upVol(r); if(!s) return 0;
+  const t=Math.min(1,Math.log10(1+s/Math.max(r.L,2)/VK)/VMAX); return t<0.03?0:t; }
+function ramp(t,a){ const c=t<.5?[60+(240-60)*t*2,142+(163-142)*t*2,166+(58-166)*t*2]:[240+(255-240)*(t-.5)*2,163+(93-163)*(t-.5)*2,58+(74-58)*(t-.5)*2]; return [c[0],c[1],c[2],a]; }
+let DS=null, P=RV.map(pressure);
+
+// --- deck ---
+const {Deck,MapView,TerrainLayer,PathLayer,ScatterplotLayer,TripsLayer,TextLayer,FlyToInterpolator,LightingEffect,AmbientLight,DirectionalLight}=deck;
+const VIEWS={all:{longitude:-1.255,latitude:51.705,zoom:9.75,pitch:52,bearing:-12},
+  city:{longitude:-1.252,latitude:51.742,zoom:12.2,pitch:58,bearing:-24},
+  pm:{longitude:-1.282,latitude:51.766,zoom:13.3,pitch:60,bearing:20},
+  sand:{longitude:-1.218,latitude:51.716,zoom:13.1,pitch:58,bearing:-40}};
+let viewState={...VIEWS.all};
+const lighting=new LightingEffect({amb:new AmbientLight({color:[255,255,255],intensity:0.95}),sun:new DirectionalLight({color:[255,236,210],intensity:1.25,direction:[-1,-2,-2.2]})});
+const ADD={blend:true,blendColorOperation:'add',blendColorSrcFactor:'src-alpha',blendColorDstFactor:'one',blendAlphaOperation:'add',blendAlphaSrcFactor:'one',blendAlphaDstFactor:'one-minus-src-alpha',depthWriteEnabled:false};
+const Z=(z,o)=>is3d?z*EX+o:0;
+const PLACES=[['Oxford',-1.2577,51.7520],['Abingdon',-1.2826,51.6708],['Witney',-1.4854,51.7859],['Bicester',-1.1531,51.8994],['Thame',-0.9750,51.7457],['Didcot',-1.2410,51.6097],['Wantage',-1.4260,51.5880],['Kidlington',-1.2900,51.8231],['Wheatley',-1.1380,51.7470],['Port Meadow',-1.2790,51.7705],['Sandford',-1.2310,51.7150]];
+const RED=[201,58,58], GREEN=[32,134,80], GREY=[140,150,150];
+const isLikely=i=>CH[i]!=null&&CH[i]>=0.5;
+function trips(){ const out=[];
+  SITES.forEach((s,i)=>{ if(!isLikely(i)||!s.trip||s.trip.length<2) return;
+    for(let j=0;j<4;j++) out.push({path:s.trip,ts:s.ts.map(t=>t-j*16000)}); });
+  return out; }
+let TR=trips(), version=0;
+
+function layers(time){
+  const pulse=reduce?0.5:(Math.sin(time/380)+1)/2;
+  const loop=62500+48000, ct=reduce?30000:((time*9)%loop);
+  const trig=[version];
+  const dimmed=r=>DS&&!DS.has(r.k);
+  return [
+    new TerrainLayer({id:'terrain',elevationData:'data/elevation.png',texture:'data/terrain.jpg',bounds:BOUNDS,
+      elevationDecoder:{rScaler:256*(is3d?EX:0),gScaler:is3d?EX:0,bScaler:(is3d?EX:0)/256,offset:-32768*(is3d?EX:0)},
+      meshMaxError:3,loadOptions:{terrain:{worker:false}},material:{ambient:.55,diffuse:.7,shininess:8,specularColor:[30,30,30]},
+      updateTriggers:{elevationDecoder:is3d},color:[255,255,255]}),
+    new PathLayer({id:'net',data:RV,getPath:r=>r.p.map(q=>[q[0],q[1],Z(q[2],10)]),widthUnits:'pixels',
+      getWidth:r=>r.m?2:0.8,getColor:r=>r.c?[150,140,200,70]:(dimmed(r)?[95,183,207,r.m?70:28]:[95,183,207,heatOn?(r.m?150:55):(r.m?220:110)]),
+      updateTriggers:{getPath:is3d,getColor:trig},jointRounded:true,capRounded:true,parameters:{depthCompare:'always'}}),
+    new PathLayer({id:'glow',data:RV.filter((r,i)=>HASV[i]),getPath:r=>r.p.map(q=>[q[0],q[1],Z(q[2],12)]),widthUnits:'pixels',
+      getWidth:r=>{const t=P[r.k];return t>0?5+14*t:0},getColor:r=>{const t=P[r.k];return ramp(t,(18+62*t)*(dimmed(r)?.25:1))},
+      updateTriggers:{getPath:is3d,getWidth:trig,getColor:trig},jointRounded:true,capRounded:true,parameters:{...ADD,depthCompare:'always'}}),
+    new PathLayer({id:'core',data:RV.filter((r,i)=>HASV[i]),getPath:r=>r.p.map(q=>[q[0],q[1],Z(q[2],14)]),widthUnits:'pixels',
+      getWidth:r=>{const t=P[r.k];return t>0?1.5+3*t:0},getColor:r=>{const t=P[r.k];return ramp(Math.min(1,0.25+t*0.85),235*(dimmed(r)?.3:1))},
+      updateTriggers:{getPath:is3d,getWidth:trig,getColor:trig},pickable:true,autoHighlight:true,highlightColor:[255,255,255,180],
+      jointRounded:true,capRounded:true,parameters:{depthCompare:'always'}}),
+    new TripsLayer({id:'flow',data:TR,getPath:d=>d.path.map(q=>[q[0],q[1],Z(q[2],16)]),getTimestamps:d=>d.ts,getColor:[255,170,80,150],
+      widthMinPixels:2.5,trailLength:5200,currentTime:ct,fadeTrail:true,capRounded:true,jointRounded:true,opacity:.9,
+      updateTriggers:{getPath:is3d},parameters:{...ADD,depthCompare:'always'}}),
+    new ScatterplotLayer({id:'ring',data:SITES.filter((s,i)=>isLikely(i)),getPosition:s=>[s.lon,s.lat,Z(s.z,22)],
+      radiusUnits:'pixels',getRadius:9+10*pulse,stroked:true,filled:false,lineWidthUnits:'pixels',getLineWidth:1.5,
+      getLineColor:[255,120,100,Math.round(180*(1-pulse))],updateTriggers:{getPosition:is3d},parameters:{depthCompare:'always'}}),
+    new ScatterplotLayer({id:'sites',data:SITES,getPosition:s=>[s.lon,s.lat,Z(s.z,22)],radiusUnits:'pixels',
+      getRadius:(s,{index:i})=>(i===sel?3:0)+(CH[i]==null?3.5:5+5*CH[i]),
+      getFillColor:(s,{index:i})=>[...(CH[i]==null?GREY:CH[i]>=0.5?RED:GREEN),255],
+      stroked:true,lineWidthUnits:'pixels',getLineWidth:(s,{index:i})=>i===sel?2.6:1.2,getLineColor:(s,{index:i})=>i===sel?[255,255,255,255]:[255,255,255,170],
+      pickable:true,autoHighlight:true,highlightColor:[255,255,255,90],
+      updateTriggers:{getRadius:trig,getFillColor:trig,getLineWidth:trig,getLineColor:trig,getPosition:is3d},
+      onClick:({index})=>select(index,true),parameters:{depthCompare:'always'}}),
+    new TextLayer({id:'places',data:PLACES,getPosition:p=>[p[1],p[2],Z(90,120)],getText:p=>p[0],getSize:p=>p[0]==='Oxford'?15:12,
+      getColor:p=>p[0]==='Oxford'?[230,236,233,235]:[180,196,196,200],fontFamily:'system-ui, sans-serif',fontWeight:500,
+      getTextAnchor:'start',getAlignmentBaseline:'center',getPixelOffset:[6,0],fontSettings:{sdf:true},outlineWidth:3,outlineColor:[11,19,21,230],
+      updateTriggers:{getPosition:is3d},parameters:{depthCompare:'always'}})
+  ];
+}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=v=>v==null?'–':Math.round(v*100)+'%';
+const m3=v=>v==null?'–':v===0?'0':v<10?'under 10':(v<1000?Math.round(v/10)*10:Math.round(v/100)*100).toLocaleString('en-GB');
+const TIPSTYLE={background:'#fff',color:'#21392e',border:'1px solid #d8e2da',borderRadius:'8px',padding:'8px 10px',boxShadow:'0 2px 8px rgba(0,0,0,.18)'};
+function tooltip({object,layer,index}){
+  if(!object) return null;
+  if(layer.id==='sites'){ const v=CH[index], o=object.obs?object.obs[day]:null;
+    const lab=v==null?'not modelled':`${pct(v)} chance of a spill`+(o==null?'':o?' · monitor: spilled':' · monitor: no spill');
+    const vl=PW[index]?`<br>physics model: ${m3(volOf(index))} m³ spilled`:(v!=null?'<br>statistical backup (no treated-flow data)':'');
+    return {html:`<div class="tip"><b>${esc(object.name)}</b><br>${object.water?'into '+esc(object.water)+'<br>':''}${lab}${vl}</div>`,style:TIPSTYLE}; }
+  if(layer.id==='core') return {html:`<div class="tip"><b>${esc(object.n||'Unnamed watercourse')}</b><br>${object.u.length} overflow${object.u.length>1?'s':''} upstream<br>${m3(upVol(object))} m³ spilled upstream that day</div>`,style:TIPSTYLE};
+  return null; }
+const D=new Deck({parent:$('deck'),views:new MapView({repeat:false,farZMultiplier:2}),initialViewState:viewState,controller:{touchRotate:true,dragRotate:true},
+  effects:[lighting],layers:layers(0),getTooltip:tooltip,onViewStateChange:({viewState:v})=>{viewState=v;D.setProps({initialViewState:viewState});},
+  onAfterRender:()=>{$('loading').hidden=true}});
+setTimeout(()=>{$('loading').hidden=true},6000);
+function frame(t){ D.setProps({layers:layers(t)}); if(!reduce) requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+function fly(v){viewState={...v,transitionDuration:1800,transitionInterpolator:new FlyToInterpolator({speed:1.4})};D.setProps({initialViewState:viewState});}
+const camMap={'cam-all':'all','cam-city':'city','cam-pm':'pm','cam-sand':'sand'};
+for(const id in camMap) $(id).onclick=()=>fly({...VIEWS[camMap[id]],pitch:is3d?VIEWS[camMap[id]].pitch:0});
+$('tog3d').onclick=e=>{is3d=!is3d;e.target.textContent=is3d?'2D':'3D';e.target.setAttribute('aria-pressed',String(is3d));fly({...viewState,pitch:is3d?55:0,bearing:is3d?viewState.bearing:0});refresh();};
+
+// --- panel ---
+const fmtDate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+const fdate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+const nMod=modelled.filter(Boolean).length, nPhys=PW.filter(Boolean).length;
+$('pillCount').textContent=`Test year · ${nPhys} works on the physics model, ${nMod-nPhys} overflows on the backup`;
+$('day').max=DATES.length-1;
+$('dayTicks').innerHTML=DATES.map((d,i)=>[d,i]).filter(([d])=>d.slice(8)==='01'&&['01','04','07','10'].includes(d.slice(5,7)))
+  .map(([d,i])=>`<span style="left:${(i/(DATES.length-1)*100).toFixed(2)}%">${new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',d.slice(5,7)==='01'||i===0?{month:'short',year:'numeric'}:{month:'short'})}</span>`).join('');
+const order=SITES.map((s,i)=>i).sort((a,b)=>SITES[a].name.localeCompare(SITES[b].name));
+const rows={};
+order.forEach(i=>{const s=SITES[i], b=document.createElement('button'); b.className='site'; b.type='button';
+  b.innerHTML=`<i></i><span>${esc(s.name)}</span><strong></strong>`; b.onclick=()=>select(i,true); $('list').append(b); rows[i]=b;});
+function filterList(){ const t=$('search').value.toLowerCase().trim(); let n=0;
+  order.forEach(i=>{const show=SITES[i].name.toLowerCase().includes(t)||(SITES[i].water||'').toLowerCase().includes(t); rows[i].style.display=show?'flex':'none'; if(show)n++;});
+  $('count').textContent=`${n} / ${SITES.length}`; }
+function paintList(){ let likely=0, obs=0;
+  order.forEach(i=>{const v=CH[i], b=rows[i], c=v==null?'#8c9696':v>=0.5?'#c93a3a':'#208650';
+    if(v!=null&&v>=0.5) likely++; if(SITES[i].obs&&SITES[i].obs[day]) obs++;
+    b.classList.toggle('sel',i===sel); b.setAttribute('aria-pressed',String(i===sel)); b.querySelector('i').style.background=c;
+    const st=b.querySelector('strong'); st.textContent=v==null?'–':pct(v); st.style.color=c; });
+  $('nLikely').textContent=likely; $('nUnlikely').textContent=nMod-likely; $('nObs').textContent=obs; }
+function paintDetail(){
+  const on=sel>=0; $('empty').classList.toggle('hidden',on); $('details').classList.toggle('hidden',!on); if(!on) return;
+  const s=SITES[sel], pw=PW[sel], w=WI[s.id], v=CH[sel];
+  $('site-name').textContent=s.name; $('site-water').textContent=s.water?'into '+s.water:'';
+  const st=$('status');
+  if(v==null){st.textContent='NOT MODELLED';st.className='status grey';}
+  else{st.textContent=v>=0.5?'● LIKELY TO SPILL':'● UNLIKELY TO SPILL';st.className='status '+(v>=0.5?'red':'green');}
+  $('st-chance').textContent=pct(v);
+  $('st-chance-sub').textContent=!pw?(v==null?'':'statistical backup'):rainOverride==null?'physics, rain that fell':'physics, this scenario';
+  const o=s.obs?s.obs[day]:null, h=s.hours?s.hours[day]:null;
+  $('st-obs').textContent=o==null?'no data':o?`spilled ${Math.round(h)} h`:'no spill';
+  $('st-vol').textContent=pw?m3(volOf(sel)):'–';
+  $('st-hours').textContent=pw?(Math.round(hoursOf(sel)*10)/10)+' h':'–';
+  $('st-stat').textContent=pct(statChance(sel,false));
+  $('st-tank').textContent=pw?pw.tank_m3.toLocaleString('en-GB')+' m³':'–'; $('st-tank-sub').textContent=pw?pw.tank_src:'no treated-flow data';
+  if(pw){ const tot=pw.v.reduce((a,x)=>a+(x||0),0), hrs=pw.h.reduce((a,x)=>a+(x||0),0);
+    $('vol-note').textContent=`Physics water balance, ${fdate(DATES[0])} to ${fdate(DATES.at(-1))}: about ${m3(tot)} m³ spilled over ${Math.round(hrs).toLocaleString('en-GB')} hours. Capacity ${pw.cap_m3d.toLocaleString('en-GB')} m³/day. An estimate: no public data measures spill volume.`; }
+  else $('vol-note').textContent=s.type==='works'?'No treated-flow data for this works, so the physics model cannot run; the chance is the statistical backup.':'Not a treatment works: the physics model only covers works with measured treated flow, so the chance is the statistical backup.';
+  $('rainBox').classList.toggle('hidden',!pw&&!w);
+  if(!pw&&!w) return;
+  const fell=pw?rainDay(pw,day).reduce((a,x)=>a+x,0):w.r[day], R=rainOverride==null?fell:rainOverride;
+  $('rain-mm').textContent=R.toFixed(1)+' mm'+(rainOverride==null?' (measured)':'');
+  $('rain-sub').textContent=`24-hour rainfall at this overflow on ${fdate(DATES[day])}`;
+  $('rain').value=String(Math.round(R*10)/10); $('reset').disabled=rainOverride==null;   // starts at the measured rain
+  if(rainOverride==null) $('explanation').textContent=`${fell.toFixed(1)} mm fell here that day (two nearest Environment Agency rain gauges). Drag to see how ${pw?'the physics model':'the statistical backup'} responds to more or less rain.`;
+  else if(pw) $('explanation').textContent=`With ${R.toFixed(1)} mm instead of the ${fell.toFixed(1)} mm that fell, the physics model's chance of a spill goes from ${pct(pw.p[day])} to ${pct(v)}, and its spill volume from ${m3(pw.v[day])} to ${m3(volOf(sel))} m³. The soil, groundwater and storm tank start the day as they were; the rain keeps its hourly pattern.`;
+  else $('explanation').textContent=`With ${R.toFixed(1)} mm instead of the ${fell.toFixed(1)} mm that fell, the statistical backup's chance of a spill goes from ${pct(statChance(sel,false))} to ${pct(v)}. How wet the ground already was stays the same.`; }
+function refresh(){ whatIf(); CH=SITES.map((_,i)=>chance(i)); P=RV.map(pressure); TR=trips(); version++; paintList(); paintDetail(); if(reduce) D.setProps({layers:layers(0)}); }
+function select(i,flyTo){ sel=i; rainOverride=null; DS=i>=0?new Set(SITES[i].downstream):null; refresh();
+  if(flyTo&&i>=0){const s=SITES[i];fly({longitude:s.lon+0.01,latitude:s.lat-0.02,zoom:12.2,pitch:is3d?58:0,bearing:viewState.bearing||-15});} }
+function setDay(d){ day=d; rainOverride=null; $('day').value=d; $('dayLabel').textContent=fmtDate(DATES[d]); refresh(); }
+$('day').oninput=e=>setDay(+e.target.value);
+$('toggle').onclick=()=>{heatOn=!heatOn;$('toggle').classList.toggle('on',heatOn);$('toggle').setAttribute('aria-checked',String(heatOn));refresh();};
+$('rain').oninput=e=>{if(sel<0)return; rainOverride=+e.target.value; refresh();};
+$('reset').onclick=()=>{rainOverride=null;refresh();};
+$('close').onclick=()=>select(-1,false);
+$('search').oninput=filterList;
+filterList(); setDay(day);
+})().catch(e=>{const l=document.getElementById('loading');l.hidden=false;l.textContent='The map could not load: '+e.message;console.error(e);});
+</script></body></html>

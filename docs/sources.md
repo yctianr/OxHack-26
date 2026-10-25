@@ -64,3 +64,11 @@
   - Thames Water – Oxford STW report (https://www.thameswater.co.uk/media-library/l52df1pb/oxford-stw-report.pdf)
   - planningsignal.co.uk – Standlake (https://www.planningsignal.co.uk/towns/standlake)
 
+
+## Storm-tank volumes (opened 25 Oct 2026)
+
+- [Find a Tender notice 2024/S 000-031739](https://www.find-tender.service.gov.uk/Notice/031739-2024), Thames Water, Oxford STW upgrade: storm tanks 6,831 → 18,167 m³ (also [notice 027435-2024](https://www.find-tender.service.gov.uk/Notice/027435-2024))
+- [Hammond et al. 2021, npj Clean Water](https://doi.org/10.1038/s41545-021-00108-3) ([PDF](https://nora.nerc.ac.uk/id/eprint/529883/1/N529883JA.pdf)), Table 1: tank sizes for WWTP1 (Church Hanborough) and WWTP2 (Witney)
+- [Written evidence WQR0020](https://committees.parliament.uk/writtenevidence/22257/html/) to the Environmental Audit Committee "Water quality in rivers" inquiry, Feb 2021, Table 3: actual tank volumes for 9 Windrush and Evenlode works ([archived copy](http://web.archive.org/web/20230202143503/https://committees.parliament.uk/writtenevidence/22257/html/))
+- [EA Consented Discharges to Controlled Waters with Conditions](https://environment.data.gov.uk/api/file/download?fileDataSetId=a54fdea1-7769-4b22-a518-10d51fed6f33&fileName=Consented%20Discharges%20to%20Controlled%20Waters%20with%20Conditions.zip): no tank field; conditional licence forbids publishing
+- [Thames Water: information about specific sites](https://www.thameswater.co.uk/about-us/performance/river-health/frequently-asked-questions/information-about-specific-sites): no tank volumes; storm-tank increases at Chalgrove, Finstock, Cholsey and Drayton
