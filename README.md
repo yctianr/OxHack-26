@@ -4,7 +4,7 @@
 
 🥈 Runner-up, HRT prize for *Best Use of Data for Predictions and Decision Making*, OxHack 2026.
 
-**Live site: <https://waisted.pages.dev>** · **Devpost: <https://devpost.com/software/waisted>**
+**Live site: <https://waisted.pages.dev>** · **Devpost: <https://devpost.com/software/waisted-m0ylrd>**
 
 [![River map: works spilling on 25 Oct 2026, the rivers they reach, and the E. coli they carry](docs/img/river-map.jpg)](https://waisted.pages.dev)
 
