@@ -11,9 +11,19 @@ Devpost: <https://devpost.com/software/waisted-m0ylrd>
 
 ## The problem
 
-The UK government and water companies are investing over £100 billion in water infrastructure, yet sewage was released into England's rivers nearly 300,000 times in 2025. When heavy rain fills the sewers faster than a treatment works can cope, the extra is released untreated into rivers and streams.
+The UK government and water companies are investing over £100 billion in water infrastructure, much of it to cut storm overflows, yet sewage was released into England's rivers nearly 300,000 times in 2025. When heavy rain fills the sewers faster than a treatment works can cope, the extra is released untreated into rivers and streams: human waste, condoms, sanitary products and industrial chemicals.
 
-This is only allowed once a works is already treating as much as its permit requires. But spill monitors only record that a spill happened, not whether it was necessary.
+Sewage spills have become a national scandal. Regulation of the water companies has been too lax for too long, and river quality has suffered, with real harm to wildlife and to the people who swim in them.
+
+A spill is only allowed once a works is already treating as much as its permit requires. But spill monitors only record that a spill happened, not whether it was necessary.
+
+## Who it's for
+
+We forecast spills days ahead from weather forecasts and each works' past flows, to help three groups decide what to do:
+
+- **Inspectors and water companies:** which works spill when they shouldn't, and which most urgently need maintenance or more capacity.
+- **Swimmers:** whether E. coli in the river will be safe for the weekend, before they go.
+- **Conservationists:** where ammonia from sewage is high enough to harm fish and other wildlife.
 
 ## What it does
 
