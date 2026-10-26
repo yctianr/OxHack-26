@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs><clipPath id="drop"><path d="M32 1C32 1 8 25 8 39a24 24 0 0 0 48 0C56 25 32 1 32 1z"/></clipPath></defs>
+  <path d="M32 1C32 1 8 25 8 39a24 24 0 0 0 48 0C56 25 32 1 32 1z" fill="#1f6f8b"/>
+  <g clip-path="url(#drop)">
+    <path d="M0 37c5.3-4.5 10.7-4.5 16 0s10.7 4.5 16 0 10.7-4.5 16 0 10.7 4.5 16 0V64H0z" fill="#c2362f"/>
+    <path d="M0 37c5.3-4.5 10.7-4.5 16 0s10.7 4.5 16 0 10.7-4.5 16 0 10.7 4.5 16 0" fill="none" stroke="#fff" stroke-width="3"/>
+  </g>
+</svg>

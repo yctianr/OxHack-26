@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spillcast: the model</title>
-<meta name="description" content="How Spillcast works: a physics water balance of every sewage works around Oxford, its data, and how well it predicts spills on days it never saw.">
+<title>wAIsted · How the model works</title>
+<link rel="icon" href="favicon.png" sizes="48x48"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="description" content="How wAIsted works: a physics water balance of every sewage works around Oxford, its data, and how well it predicts spills on days it never saw.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <style>
 :root{--ink:#1f2a30;--mute:#6b7a80;--line:#e3e8ea;--card:#fff;--bg:#eef2f3;--accent:#1f6f8b;--good:#3aa76d;--bad:#c2362f;--grey:#8a979c;
@@ -34,6 +35,7 @@ td.n{text-align:right;white-space:nowrap}
 .eq{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#f6f8f8;border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
 .legend{display:flex;gap:14px;font-size:11.5px;color:var(--mute);margin-top:6px;flex-wrap:wrap}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.math h3{font-size:14px;margin:0 0 4px}.math table{max-width:720px}
 .math p{font-size:13px;line-height:1.55;margin:10px 0 4px}.math .katex-display{margin:6px 0 10px;overflow-x:auto;overflow-y:hidden}
 .foot{margin-top:40px;font-size:11.5px;color:var(--mute)}
 .foot a{color:inherit}
@@ -65,20 +67,79 @@ td.n{text-align:right;white-space:nowrap}
   <tr><td>Rivers</td><td>OS Open Rivers</td></tr>
 </table></div>
 <h2>Formulae</h2>
+<p class="lead">Every works is simulated hour by hour (\(t\)); results are reported per day (\(d\)). Flows in m³/h, rain and evaporation in mm. Fitted per works: \(F, A, A_s, \tau_f, D_{\max}, k\) and \(\tau_g\) or \(q_0\). Measured: \(C\). Sourced: \(V\).</p>
+
 <div class="card math">
-<p><b>Water balance</b> (hourly, per works). Inflow is sewage + runoff + groundwater; \(C\) capacity, \(V\) storm tank, \(S_t\) tank level, \(X_t\) spill.</p>
-$$I_t = Q^{\text{sewage}}_t + Q^{\text{runoff}}_t + Q^{\text{groundwater}}_t$$
-$$S_t = \min\!\big(V,\ \max(0,\ S_{t-1} + I_t - C)\big),\qquad X_t = \max\!\big(0,\ S_{t-1} + I_t - C - V\big)$$
-<p><b>Chance of a spill</b> on day \(d\): share of \(N = 200\) runs with random inflow errors that spill.</p>
-$$\hat p_d = \frac{1}{N}\sum_{n=1}^{N} \mathbf 1\Big[\textstyle\sum_{t \in d} X^{(n)}_t > 0\Big]$$
+<h3>1 · The sewage works, hour by hour</h3>
+<p><b>Sewage</b> from homes and businesses: a ±30% daily cycle peaking at noon; \(h_t\) is the local hour.</p>
+$$Q^{\text{sewage}}_t = F\,\Big[1 + 0.3\cos\!\Big(\frac{2\pi\,(h_t - 12)}{24}\Big)\Big]$$
+<p><b>Soil</b>: the moisture deficit \(D\) (mm) is filled by rain \(P_t\) and emptied by evaporation \(E_t\), more slowly as the soil dries. Rain that falls on saturated soil recharges groundwater (\(R_t\)).</p>
+$$\tilde D_t = D_{t-1} + E_t\Big(1 - \frac{D_{t-1}}{D_{\max}}\Big) - P_t,\qquad D_t = \min\!\big(D_{\max},\ \max(0,\ \tilde D_t)\big),\qquad R_t = \max(0,\ -\tilde D_t)$$
+<p><b>Rain runoff</b>, delayed by \(\tau_f\) hours in the sewers. Hard surfaces \(A\) always drain; land \(A_s\) drains only as it saturates. Areas in hectares: 1 mm on 1 ha = 10 m³.</p>
+$$\bar P_t = a_f\,\bar P_{t-1} + (1 - a_f)\,P_t,\quad a_f = e^{-1/\tau_f},\qquad Q^{\text{runoff}}_t = 10\,\Big(A + A_s\Big(1 - \frac{D_t}{D_{\max}}\Big)\Big)\,\bar P_t$$
+<p><b>Groundwater</b> leaking into the pipes, in whichever of two forms fits each works better: a store \(G\) draining over \(\tau_g\) days, or driven by Thames flow at Farmoor \(Q^{\text{F}}_t\) (m³/s) above \(q_0\).</p>
+$$G_t = a_g\,G_{t-1} + R_t,\quad a_g = e^{-1/(24\,\tau_g)},\quad Q^{\text{gw}}_t = k\,G_t \qquad\text{or}\qquad Q^{\text{gw}}_t = k\,\max\!\big(0,\ Q^{\text{F}}_t - q_0\big)$$
+<p><b>Treat, store or spill.</b> Inflow \(I_t\) (\(m_t\) is the inflow error, 1 when fitting). The works treats up to capacity \(C\); the storm tank \(V\) takes the excess and is pumped back when inflow drops; only what a full tank can't hold spills. \(S_t\) tank level, \(T_t\) treated, \(X_t\) spill.</p>
+$$I_t = m_t\,\big(Q^{\text{sewage}}_t + Q^{\text{runoff}}_t + Q^{\text{gw}}_t\big)$$
+$$S_t = \min\!\big(V,\ \max(0,\ S_{t-1} + I_t - C)\big),\qquad X_t = \max\!\big(0,\ S_{t-1} + I_t - C - V\big),\qquad T_t = \min(I_t,\ C) + \max(0,\ S_{t-1} - S_t)$$
+<p><b>Capacity and tank.</b> \(C\) is measured, not fitted: the 95th percentile of the works' daily treated flow \(T^{\text{obs}}_d\) on training days. \(V\) is the published tank volume where one exists, otherwise the design rule of 2 hours at capacity.</p>
+$$C = \tfrac{1}{24}\,\mathrm{P}_{95}\big(T^{\text{obs}}_d\big),\qquad V = 2\ \text{h} \times C$$
+</div>
+
+<div class="card math" style="margin-top:14px">
+<h3>2 · Fitting, and the chance of a spill</h3>
+<p><b>Fit</b> to daily treated flow only, never to spill records. Errors are in logs, so a 10% miss counts the same at every works, with a robust loss (\(s = 0.1\)). On days at capacity (\(T^{\text{obs}}_d \ge 0.9 \times 24C\)) the meter only shows that inflow was at least that much, so only too little inflow is penalised.</p>
+$$e_d = \begin{cases} \ln \hat T_d - \ln T^{\text{obs}}_d & \text{below capacity} \\ \min\!\big(0,\ \ln \hat I_d - \ln T^{\text{obs}}_d\big) & \text{at capacity} \end{cases}\qquad \hat\theta = \arg\min_\theta \sum_d s^2\Big(\sqrt{1 + (e_d/s)^2} - 1\Big)$$
+<p><b>Inflow error</b>, from the fit's misses on days below capacity: its size \(\sigma\) (robust) and day-to-day persistence \(\rho\) (lag-1 correlation). Each run draws a fresh daily error.</p>
+$$\sigma = 1.4826\ \operatorname*{median}_d \big|e_d - \operatorname{median}(e)\big|,\qquad \varepsilon_d = \rho\,\varepsilon_{d-1} + \sqrt{1 - \rho^2}\,\sigma\,z_d,\quad z_d \sim \mathcal N(0, 1),\qquad m_t = e^{\varepsilon_{d(t)} - \sigma^2/2}$$
+<p><b>Chance of a spill</b> on day \(d\), expected spill-hours and spill volume, over \(N = 200\) runs. The 7-day forecast runs 4 errors on each of the 51 ECMWF rain-forecast members, \(N = 204\).</p>
+$$\hat p_d = \frac{1}{N}\sum_{n=1}^{N} \mathbf 1\Big[\textstyle\sum_{t \in d} X^{(n)}_t > 0\Big],\qquad \bar H_d = \frac{1}{N}\sum_{n=1}^{N} \#\big\{t \in d : X^{(n)}_t > 0\big\},\qquad \bar X_d = \frac{1}{N}\sum_{n=1}^{N} \sum_{t \in d} X^{(n)}_t$$
+<p><b>What if.</b> The day is rerun from the works' state that morning, with the day's hourly rain pattern scaled to the new total \(R'\) and your tank \(V\) or capacity \(C\).</p>
+$$P'_t = P_t\,\frac{R'}{\sum_{t \in d} P_t}$$
+</div>
+
+<div class="card math" style="margin-top:14px">
+<h3>3 · River water quality</h3>
+<p><b>Concentration</b> in 100 m segment \(j\) on day \(d\): background, plus each works \(w\) upstream that spills that day, diluted by the river flow \(Q_j\) and decaying over the travel time \(t_{wj}\).</p>
+$$c_j = c_{\text{bg}} + \sum_{w\ \text{spilling}} c_0\,\frac{r_w}{Q_j + r_w}\,e^{-k\,t_{wj}}$$
+<p><b>Travel time and river flow.</b> Travel at \(u = 0.5\) m/s along the river, up to 40 km. Gauged rivers use their nearest EA gauge; elsewhere, the gauges' median runoff per km² \(q_d\) times the catchment area, estimated as 1.99 km² per km of river upstream \(L^{\text{up}}_j\).</p>
+$$t_{wj} = \frac{L_{wj}}{u},\qquad Q_j = \begin{cases} Q^{\text{gauge}}_d & \text{gauged river} \\ 1.99\,L^{\text{up}}_j\,q_d & \text{elsewhere} \end{cases},\qquad q_d = \operatorname*{median}_g \frac{Q_{g,d}}{\text{area}_g}$$
+<p><b>Spill rate</b> of each works, from the physics model over the test year (m³/s); 0.37 × capacity at works the model never spills. A day counts as a spill day if the monitor recorded one; on forecast days, and days with no usable monitor record, if \(\hat p_d \ge 0.5\).</p>
+$$r_w = \frac{\sum_d \bar X_d}{3600\,\sum_d \bar H_d}$$
+<table style="margin:6px 0 10px">
+  <tr><th></th><th>In the spill \(c_0\)</th><th>Background \(c_{\text{bg}}\)</th><th>Loss \(k\) (per day)</th><th>Unsafe from</th></tr>
+  <tr><td>E. coli (per 100 mL)</td><td>1.5 × 10⁶</td><td>100</td><td>0.5 Oct–Mar, 1.1 Apr–Sep</td><td>235: not safe to swim</td></tr>
+  <tr><td>Ammonia (mg N/L)</td><td>4</td><td>0.04</td><td>0.3</td><td>0.5: harmful to fish</td></tr>
+</table>
+</div>
+
+<div class="card math" style="margin-top:14px">
+<h3>4 · Statistical backup</h3>
+<p>One small logistic model per overflow, fitted to spill records. It covers overflows without treated-flow data and gives a second opinion. Rain is held in a store with memory \(\tau\), and the Thames flow at Farmoor measures how wet the catchment is; \(\Lambda(z) = 1/(1 + e^{-z})\).</p>
+$$F_t = a\,F_{t-1} + (1 - a)\,\tau P_t,\quad a = e^{-1/\tau},\quad \tau \in \{6, 12, 24, 48, 96\}\ \text{h}$$
+$$z_t = b_0 + b_1 \ln Q^{\text{F}}_t + b_2 F_t,\qquad \Pr(\text{spilling in hour } t) = \Lambda(z_t),\qquad \Pr(\text{spill on day } d) = \Lambda\big(c_0 + c_1 \max_{t \in d} z_t\big)$$
+</div>
+
+<div class="card math" style="margin-top:14px">
+<h3>5 · Regulator watchlist</h3>
+<p><b>Test A, spilling below the permit:</b> a day spilling 20+ hours (\(H^{\text{obs}}_d\)) while treating under 80% of the permitted flow (FFT). The permit asks for 92%; 80% leaves room for outlet metering and daily averaging.</p>
+$$H^{\text{obs}}_d \ge 20\ \text{h}\quad\text{and}\quad T^{\text{obs}}_d \lt 0.8 \times \text{FFT}$$
+<p><b>Test B, a spill the weather doesn't explain:</b> a recorded spill that both models, given the rain that fell, called under 5% likely.</p>
+$$H^{\text{obs}}_d \ge 1\ \text{h}\quad\text{and}\quad \hat p^{\text{physics}}_d \lt 0.05\quad\text{and}\quad \hat p^{\text{statistical}}_d \lt 0.05$$
+<p><b>Lead level.</b> Strong: 10+ all-day spill days with 30%+ of them failing Test A, or 10+ days failing Test B. Moderate: 5+ days failing Test A, or 3+ failing Test B.</p>
+</div>
+
+<div class="card math" style="margin-top:14px">
+<h3>6 · How accuracy is scored</h3>
+<p>On days the model never saw; \(y_i = 1\) if the monitor recorded a spill.</p>
+<p><b>Brier score and skill</b>: the mean squared error of the chances, and the improvement over always predicting each works' usual spill rate (climatology).</p>
+$$\text{BS} = \frac{1}{n}\sum_{i=1}^{n} (\hat p_i - y_i)^2,\qquad \text{Skill} = 1 - \frac{\text{BS}}{\text{BS}_{\text{clim}}}$$
 <p><b>Accuracy</b>: a spill is called when \(\hat p \ge 0.5\).</p>
 $$\text{Accuracy} = \frac{1}{n}\sum_{i=1}^{n} \mathbf 1\big[\,\mathbf 1[\hat p_i \ge 0.5] = y_i\,\big]$$
 <p><b>AUC</b>: share of (spill day, dry day) pairs where the spill day gets the higher chance; \(n_1\) spill days, \(n_0\) dry days, \(R_1\) sum of the spill days' ranks.</p>
 $$\text{AUC} = \frac{1}{n_1 n_0}\sum_{i:\,y_i=1}\ \sum_{j:\,y_j=0}\Big(\mathbf 1[\hat p_i > \hat p_j] + \tfrac12\,\mathbf 1[\hat p_i = \hat p_j]\Big) = \frac{R_1 - \frac{n_1(n_1+1)}{2}}{n_1\,n_0}$$
 <p><b>Reliability</b>: for days grouped into bins \(b\) by predicted chance, compare the mean prediction with the share that spilled.</p>
 $$\bar{\hat p}_b = \frac{1}{|b|}\sum_{i\in b}\hat p_i \quad\text{vs}\quad \bar y_b = \frac{1}{|b|}\sum_{i\in b} y_i$$
-<p><b>River concentration</b> at segment \(j\): background plus each spilling works \(w\) upstream, diluted by river flow \(Q_j\) and decaying over travel time \(t_{wj}\).</p>
-$$c_j = c_{\text{bg}} + \sum_{w} c_0\,\frac{r_w}{Q_j + r_w}\,e^{-k\,t_{wj}}$$
 </div>
 
 <p class="foot">Fitted only to treated flow; spill records used only for testing. River quality: sewage diluted by river flow and fading downstream; unsafe at E. coli 235/100 mL or ammonia 0.5 mg/L.</p>
