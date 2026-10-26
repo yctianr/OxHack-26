@@ -1,5 +1,5 @@
 """Site registry: the 61 overflows within 25 km of Oxford (lat/lon included) and the EA station lists.
-Run after `python scripts/fetch_data.py thames-alerts && python scripts/fetch_data.py events`."""
+Run after `python scripts/fetch.py alerts && python scripts/fetch.py events`."""
 import math
 import os
 import urllib.request

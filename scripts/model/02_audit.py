@@ -1,5 +1,5 @@
 """Data-quality audit, bottom layer first: spill labels, rain gauges, river flow, treated flow.
-Prints a report and writes audit_reconciliation.csv (used by 4_build_clean.py to mask unreliable site-years).
+Prints a report and writes audit_reconciliation.csv (used by 03_clean.py to mask unreliable site-years).
 Needs data/raw/annual_returns/tw_edm_{2024,2025}.xlsx (Thames Water EDM annual returns)."""
 import os
 import warnings

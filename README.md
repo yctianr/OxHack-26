@@ -1,73 +1,124 @@
 # Spillcast
 
-**Which sewage works should the Environment Agency inspect first?** Spillcast models every Thames Water treatment works within 25 km of Oxford with a physics water balance, fitted only to the flow each works treated, and flags the works that spill when the physics says they shouldn't.
+**Which sewage works spill when they shouldn't, and where would the money stop it?**
 
-Built for **OxHack 2026** (HRT prize: "Best Use of Data for Predictions and Decision Making").
+🥈 Runner-up, HRT prize for *Best Use of Data for Predictions and Decision Making*, OxHack 2026.
 
-**Start here: [docs/01-overview.md](docs/01-overview.md)**, then [docs/09-handover.md](docs/09-handover.md) for the current state and next steps.
+![River map: works spilling on 25 Oct 2026, the rivers they reach, and the E. coli they carry](docs/img/river-map.jpg)
 
-## Run the website
+## The problem
 
-Everything the site shows is pre-built in `web/`: no data download or Python packages needed.
+The UK government and water companies are investing over **£100 billion** in water infrastructure from 2025 to 2030, yet storm overflows in England discharged sewage nearly **300,000 times in 2025**. In a storm, rain floods into the sewers. When more water reaches a treatment works than it can treat, the excess is dumped untreated into rivers and streams.
 
-```bash
-python3 -m http.server 8000 -d web      # then open http://localhost:8000/scenario.html
+That is allowed only in a genuine storm, once the works is treating its full permitted flow and its storm tank is full. But spill monitors record only *that* a works spilled, not *whether it had to*. So a regulator can't tell an unavoidable spill from a works that is failing, and nobody can say where the next pound cuts the most sewage.
+
+## What Spillcast does
+
+Spillcast models every Thames Water sewage works within 25 km of Oxford as plumbing, hour by hour: water in from homes, rain and groundwater; treated up to capacity; the excess held in a storm tank; and only what the tank can't hold spills. The model is fitted only to the water each works *treated*, and **never sees a spill record**. That makes it an independent judge of when a works should spill.
+
+- **Inspect:** a watchlist of works that spill while treating well below their permit, or in weather that doesn't explain it.
+- **Forecast:** the chance each works spills over the next 7 days, from the 51-member ECMWF ensemble rain forecast.
+- **Protect:** E. coli and ammonia every 100 m of river, so you can see whether a stretch is safe to swim in and safe for fish, past and forecast.
+- **Invest:** rerun any day with more rain, a bigger storm tank or more treatment capacity, and see how many spills it removes and which rivers come clean.
+
+## How a works spills
+
+```mermaid
+flowchart LR
+  rain([Rain<br/>EA gauges, 15-min]) --> hard[Roofs and roads<br/>drain at once]
+  rain --> soil[Soil<br/>drains once wet]
+  evap([Evaporation]) -. dries .-> soil
+  soil -- surplus --> gw[Groundwater<br/>leaks into pipes]
+  homes([Homes and businesses]) --> foul[Sewage<br/>daily cycle]
+  hard --> sewer{{Flow reaching the works}}
+  soil --> sewer
+  gw --> sewer
+  foul --> sewer
+  sewer --> works[Treatment<br/>up to capacity C]
+  works --> treated([Treated flow<br/>measured daily<br/><b>fitted to this</b>])
+  sewer -- above C --> tank[Storm tank V]
+  tank -- pumped back --> works
+  tank -- when full --> spill([Spill to river<br/>logged by monitor<br/><b>never fitted</b>])
+  classDef out fill:#e3f2e6,stroke:#3b8a50,color:#123
+  classDef bad fill:#fbe3e0,stroke:#c0392b,color:#123
+  class treated out
+  class spill bad
 ```
 
-- **Use the server, not a double-click:** browsers block `file://` pages from loading their data.
-- **It needs internet** for the map and chart libraries.
-- **`scenario.html`** lets you change the rain at any overflow and reruns the physics model in the browser.
-- **`river.html`** shows E. coli and ammonia every 100 m of river, past and forecast: hover over a river for "safe to swim?" and "safe for fish?".
-- **To host it**, upload `web/` to any static host (e.g. <https://app.netlify.com/drop>).
+Each fitted number is physical and can be checked: litres per person per day, hectares of land draining to the sewer, days for groundwater to drain. The storm tank comes from published sources where we found them, and from the 2-hour design rule elsewhere. Two hundred runs with realistic inflow errors turn one simulation into a **chance of spilling** each day. Full equations: [docs/model.md](docs/model.md).
 
-More: [docs/06-website.md](docs/06-website.md).
+## From data to decisions
 
-## Repo layout
+```mermaid
+flowchart LR
+  subgraph src [Open data]
+    tw[Thames Water<br/>spill alerts · treated flow · annual returns]
+    ea[Environment Agency<br/>rain · river flow]
+    om[Open-Meteo<br/>evaporation · ECMWF forecast]
+    oric[ORIC<br/>permitted flow · population]
+  end
+  tw & ea & om & oric --> audit[Audit and clean]
+  audit --> phys[Physics water balance<br/>52 works · main model]
+  audit --> stat[Statistical model<br/>61 overflows · backup]
+  phys --> wl[Regulator watchlist]
+  stat --> wl
+  phys --> fc[7-day spill forecast]
+  phys --> wq[River E. coli and ammonia]
+  phys --> wi[What-if: tank, capacity, rain]
+```
+
+The statistical backup is a small rain-and-wet-ground model fitted to spill records. It covers the 9 overflows the water balance can't run at, which have no usable treated-flow data. It also has to agree before a spill counts as "unexplained by the weather", which guards against the physics model's known undercount.
+
+## Results
+
+Scored on a year neither model was trained on (Oct 2025 – Oct 2026), at 52 works.
+
+| | |
+| --- | --- |
+| **Ranks spill days without seeing one** | Median AUC 0.96 per works, against 0.98 for a model fitted to the spill records. Days called right: 92%, against 87% for always guessing "no spill" |
+| **Live storm, 23 Oct 2026** | 16.2 spills expected, 16 happened; 10 of them flagged at 50%+ |
+| **The physics means what it says** | Sewage 163 L per person per day; capacity within 7% of the published permitted flow; peak groundwater leakage 1.07× Thames Water's own allowance; the 2-hour tank rule within 6–18% of the real tanks |
+| **Watchlist** | 7 strong and 14 moderate leads among 53 works; 4 of the 7 strong leads had no Thames Water investigation in its 2025 return |
+
+**Clearest lead: Shabbington.** It treated a median 22% of its permitted flow on 52 of its 54 all-day spill days. Every lead comes with dates and the operator records that would settle it: [docs/watchlist.md](docs/watchlist.md).
+
+**Honest limits.** Treated flow is published only as daily totals and stops at capacity. The model therefore can't see how far a storm overshoots, and it undercounts spill-hours by about 27%. Spill volumes rank works but can't be checked against measurements. A lead is a reason to look, not proof of a breach.
+
+## Repository
 
 ```
-docs/                 01 overview · 02 physical model (main) · 03 statistical model (backup) · 04 watchlist
-                      05 data · 06 website · 07 Oxford context · 08 prior work · 09 handover · 10 water quality
-                      sources · model-equations.html
-scripts/model/        1–6 data, cleaning and the statistical model; 8–11 and wb.py the physics water balance and forecast;
-                      tanks.csv sourced storm-tank volumes; common.py shared code
-scripts/web/          builds web/data/*.json and web/watchlist/data.json (order in scripts/web/README.md)
-scripts/fetch_data.py Thames Water alerts and status, EA Hydrology, EA LIDAR (stdlib only)
-web/                  the website (static): scenario.html, river.html and pre-built data
-data/raw/, data/interim/   fetched and cleaned data (git-ignored, ~460 MB)
+web/                  static site: index.html (river map, forecast, what-if), model.html (method and backtest), data/
+scripts/fetch.py      downloads spill alerts and EA rain and river-flow gauges into data/raw/
+scripts/model/        01–10 in order: sites, audit, clean data, statistical model, water balance, forecast, watchlist
+                      wb.py the water balance · common.py shared code · tanks.csv sourced storm-tank volumes
+scripts/web/          builds web/data/*.json from the model outputs
+docs/                 model · watchlist · water quality · data · background and sources
+data/                 raw and cleaned data (git-ignored, ~500 MB)
 ```
 
-## Rebuild everything
+## Rebuild
 
-Only needed to change the models or refresh the data. From the repo root:
+Only needed to change the models or refresh the data. Run from the repo root (about 30 minutes, mostly the alert download):
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && source .venv/bin/activate
 
-# 1. fetch (about 15 min)
-python scripts/fetch_data.py thames-alerts && python scripts/fetch_data.py events && python scripts/fetch_data.py thames-status
-python scripts/fetch_data.py dtm --res 20
-# 2. download by hand (links in docs/05-data.md, "Rebuilding the data"): Thames Water treated volumes and annual returns,
-#    the ORIC capacity sheet, OS Open Rivers
-# 3. clean data and the statistical backup
-for s in 1_fetch_gauges 2_sites 3_audit 4_build_clean 5_evaluate 6_site_cards; do python scripts/model/$s.py; done
-# 4. physics water balance (8 also downloads daily evaporation from Open-Meteo)
-for s in 8_wb_prep 9_wb_fit 10_wb_evaluate 11_forecast; do python scripts/model/$s.py; done
-# 5. website data (extra packages: pip install pyproj rasterio pillow)
-for s in rivers terrain texture data physics whatif build_stats watchlist quality; do python scripts/web/$s.py; done
+python scripts/fetch.py alerts && python scripts/fetch.py events && python scripts/fetch.py status && python scripts/fetch.py gauges
+# by hand into data/raw/ (links in docs/data.md): Thames Water treated volumes (tdv/) and annual returns
+# (annual_returns/), the ORIC capacity sheet (oric_fft.xlsx), OS Open Rivers (os_open_rivers/)
+
+for s in scripts/model/0*.py scripts/model/10_watchlist.py; do python $s; done
+for s in rivers outfalls physics quality stats; do python scripts/web/$s.py; done
 ```
 
-## Refresh the forecast
+`09_forecast.py` fetches the live ECMWF ensemble. To move the forecast on, set `DATA_END` in `scripts/model/common.py` to the last full hour of yesterday (UTC), then rerun everything except `01_sites.py` and `rivers.py`.
 
-The site's last 7 days are a physics forecast made when the data was last built. To bring it up to date: set `DATA_END` in `scripts/model/common.py` to the last full hour of yesterday (UTC), then
+## Docs
 
-```bash
-python scripts/fetch_data.py thames-alerts && python scripts/fetch_data.py events && python scripts/model/1_fetch_gauges.py
-for s in 3_audit 4_build_clean 5_evaluate 6_site_cards 8_wb_prep 9_wb_fit 10_wb_evaluate 11_forecast; do python scripts/model/$s.py; done
-for s in data whatif watchlist physics build_stats quality; do python scripts/web/$s.py; done
-```
-
-About 25 minutes in all, most of it the alert download. More: [docs/02-physical-model.md](docs/02-physical-model.md#forecast).
-
-## Data licences
-
-EA, OS Open Rivers and Find a Tender data: Open Government Licence. Open-Meteo: CC BY 4.0. Thames Water data: [their terms](https://data.thameswater.co.uk/s/terms-of-service), not an open licence. ORIC capacity sheet: not yet checked. Details: [docs/05-data.md](docs/05-data.md#licences-and-what-we-publish).
+| | |
+| --- | --- |
+| [model.md](docs/model.md) | The physics water balance and the statistical backup: equations, fitting, checks, scores, forecast, limits |
+| [watchlist.md](docs/watchlist.md) | The two tests, the current leads, and what to request from the operator |
+| [water-quality.md](docs/water-quality.md) | E. coli and ammonia every 100 m of river: method, parameters and their sources |
+| [data.md](docs/data.md) | Every dataset, what the audit found, and every file the pipeline writes |
+| [background.md](docs/background.md) | Oxford context, prior work, and every source |

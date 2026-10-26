@@ -1,4 +1,4 @@
-"""Principled evaluation on the audited data layer (4_build_clean.py). Two tasks, never mixed:
+"""Principled evaluation on the audited data layer (03_clean.py). Two tasks, never mixed:
 
   EXPLAIN  - given the weather that actually fell (observed rain for day d), how well does the model reproduce
              spills? This is what volume estimates and infrastructure what-ifs rely on. No observed spill state.
@@ -25,7 +25,7 @@ day = np.asarray((idx - idx[0]).days)
 hod = idx.hour.values
 ND = day.max() + 1
 dates = pd.date_range(idx[0].normalize(), periods=ND, freq="D")
-W = inp[FLOW].values                       # Thames at Farmoor, causally aligned in 4_build_clean.py
+W = inp[FLOW].values                       # Thames at Farmoor, causally aligned in 03_clean.py
 
 
 def daily(v, how):

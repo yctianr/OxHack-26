@@ -1,4 +1,4 @@
-"""River water quality for the website's river page (web/river.html). Writes web/data/quality.json.
+"""River water quality for the website's river page (web/index.html). Writes web/data/quality.json.
 
 E. coli and ammonia while a spill passes, every 100 m of river downstream of each sewage works, for every day of the
 website (the held-out test year and the physics model's 7-day forecast). The page does the arithmetic per day:
@@ -13,7 +13,7 @@ website (the held-out test year and the physics model's 7-day forecast). The pag
   t   travel time from the works (h) at a constant velocity; k first-order decay (E. coli faster in summer); c0 source.
 Fully mixed across the river, steady over the spill. Parameters and their sources are in PARAMS below.
 Network and pumping-station overflows have no treated-flow data, so no spill rate: they are shown but add nothing.
-Run from the repo root after data.py and physics.py (needs data/interim/web_links.pkl from rivers.py)."""
+Run from the repo root after outfalls.py and physics.py (needs data/interim/web_links.pkl from rivers.py)."""
 import json
 import math
 import pickle
@@ -55,7 +55,7 @@ links = [l for l in pickle.load(open("data/interim/web_links.pkl", "rb")) if l["
 for k, l in enumerate(links):
     l["k"] = k
 
-# ---- network: downstream links (bridging small gaps, as data.py does) and river length upstream ----
+# ---- network: downstream links (bridging small gaps, as outfalls.py did for the 3D map) and river length upstream ----
 by_start = defaultdict(list)
 for l in links:
     by_start[l["sn"]].append(l["k"])

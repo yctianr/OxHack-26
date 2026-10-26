@@ -12,7 +12,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 RAW = os.path.join(ROOT, "data", "raw")
 INT = os.path.join(ROOT, "data", "interim")
 TZ = "Europe/London"
-DATA_END = "2026-10-24 23:00"     # last hour (UTC) of observed data; move it to extend everything (4, 8, folds)
+DATA_END = "2026-10-24 23:00"     # last hour (UTC) of observed data; move it to extend everything (03, 06, folds)
 FOLDS = {"A": ("2024-10-01", "2025-10-01"),
          "B": ("2025-10-01", str((pd.Timestamp(DATA_END) + pd.Timedelta(hours=1)).date()))}   # test windows (train = before)
 TAUS = (6, 12, 24, 48, 96)                                                        # rain store time constants, h

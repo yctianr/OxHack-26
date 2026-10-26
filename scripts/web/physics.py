@@ -1,16 +1,15 @@
 """The physics water balance, packed for the website. Writes web/data/physics.json.
 
-Physics only: spilling starts at the works' measured capacity once its storm tank is full (wb1_* in 9_wb_fit.py), so no
+Physics only: spilling starts at the works' measured capacity once its storm tank is full (wb1_* in 07_wb_fit.py), so no
 spill record shapes these numbers. Fold B parameters; the website's days are the held-out test year (outfalls.json),
-followed by the 7-day forecast from scripts/model/11_forecast.py when it has been run.
-Per works: daily chance of a spill, spill-hours and spill volume (the ensembles from 9_wb_fit.py and 11_forecast.py), the
+followed by the 7-day forecast from scripts/model/09_forecast.py when it has been run.
+Per works: daily chance of a spill, spill-hours and spill volume (the ensembles from 07_wb_fit.py and 09_forecast.py), the
 fitted parameters, and the state of its stores at the start of each day (soil deficit, groundwater, routed rain, tank).
 Shared: hourly rain at each gauge (ensemble mean on forecast days), evaporation, Thames flow at Farmoor and local hour
-for each day, so the page can rerun one day of the model with different rain (scenario.html). The check at the end
-reruns that one-day version here at the rain that fell and compares it with the full ensemble.
-Also the river-glow scale: on each day every river link gets (spill volume from the works upstream) divided by its
-upstream river length, a stand-in for dilution; K and S99 are the median and 99th percentile of the non-zero values.
-Run from the repo root after 9_wb_fit.py, 11_forecast.py and data.py."""
+for each day, so the river map's What-if mode can rerun one day of the model with different rain, storm tank or
+capacity (web/index.html). The check at the end reruns that one-day version here at the rain that fell and compares it
+with the full ensemble.
+Run from the repo root after 07_wb_fit.py, 09_forecast.py and outfalls.py."""
 import importlib.util
 import json
 import os
@@ -19,12 +18,11 @@ import numpy as np
 import pandas as pd
 sys.path.insert(0, "scripts/model")
 import wb
-spec = importlib.util.spec_from_file_location("wbfit", "scripts/model/9_wb_fit.py")
+spec = importlib.util.spec_from_file_location("wbfit", "scripts/model/07_wb_fit.py")
 wbfit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(wbfit)
 
 O = json.load(open("web/data/outfalls.json"))
-RV = json.load(open("web/data/rivers.json"))
 dates = O["dates"]
 D = pd.read_pickle("data/interim/wb_predictions.pkl")
 D = D[D.fold == "B"].assign(day=lambda d: pd.DatetimeIndex(d.date).strftime("%Y-%m-%d"))
@@ -41,7 +39,7 @@ if FC:
     F = pd.read_pickle("data/interim/wb_forecast.pkl")
     FD = json.load(open("data/interim/wb_forecast_drivers.json"))
     assert FD["gauges"] == gauges and pd.Timestamp(FD["dates"][0]) == pd.Timestamp(dates[-1]) + pd.Timedelta(days=1), \
-        "forecast doesn't follow the observed days: rerun 11_forecast.py"
+        "forecast doesn't follow the observed days: rerun 09_forecast.py"
 
 
 def one_day(prm, s0, rain, pet, wet, lh, n=200, seed=0):
@@ -99,20 +97,12 @@ if FC:
         drv[k] += FD[k]
     forecast = dict(start=len(dates), issued=FD["issued"], model=FD["model"], members=FD["members"])
 
-# river-glow scale over observed link-days
-ix = {s["id"]: i for i, s in enumerate(O["sites"])}
-V = np.zeros((len(O["sites"]), len(dates)))
-for p, w in works.items():
-    V[ix[p]] = w["v"][:len(dates)]
-vals = np.concatenate([(V[r["u"]].sum(0) / max(r["L"], 2)) for r in RV if r["u"]])
-vals = vals[vals > 0]
-scale = dict(K=float(np.quantile(vals, 0.5)), S99=float(np.quantile(vals, 0.99)))
 all_dates = dates + (FD["dates"] if FC else [])
-json.dump(dict(dates=all_dates, forecast=forecast, scale=scale, drivers=drv, works=works),
+json.dump(dict(dates=all_dates, forecast=forecast, drivers=drv, works=works),
           open("web/data/physics.json", "w"), separators=(",", ":"))
 
 c = pd.DataFrame(check, columns=["site", "date", "p_ens", "p_day", "v_ens", "v_day"])
 print(f"{len(works)} works; {len(dates)} observed days + {len(all_dates) - len(dates)} forecast; "
-      f"{os.path.getsize('web/data/physics.json') / 1e6:.2f} MB; glow scale K={scale['K']:.1f} S99={scale['S99']:.1f}")
+      f"{os.path.getsize('web/data/physics.json') / 1e6:.2f} MB")
 print(f"one-day version vs full ensemble, {len(c)} site-days: |dp| median {np.median(abs(c.p_ens - c.p_day)):.3f}, "
       f"p90 {np.quantile(abs(c.p_ens - c.p_day), .9):.3f}; volume correlation {np.corrcoef(c.v_ens, c.v_day)[0, 1]:.3f}")

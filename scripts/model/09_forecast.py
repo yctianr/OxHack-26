@@ -1,6 +1,6 @@
 """7-day spill forecast from the physics water balance, with the weather forecast's own uncertainty.
 
-Each works runs on from the end of the observed data (common.DATA_END) with the fold-B parameters from 9_wb_fit.py:
+Each works runs on from the end of the observed data (common.DATA_END) with the fold-B parameters from 07_wb_fit.py:
   rain        ECMWF IFS 0.25° ensemble (51 members) from Open-Meteo, hourly, at each EA rain gauge, mixed per works
               exactly as the observed rain is (its two nearest gauges)
   evaporation Open-Meteo daily FAO reference evaporation forecast at Oxford, spread over the hours
@@ -10,7 +10,7 @@ For every member, 4 runs with the works' daily inflow error (AR(1), as in the hi
 Spilling starts only at capacity with a full storm tank; no spill record is used.
 Writes data/interim/wb_forecast.pkl (works x day: chance of a spill, spill-hours, m3, mean rain) and
 data/interim/wb_forecast_drivers.json (ensemble-mean hourly rain per gauge, evaporation, flow, local hour, and each
-works' start-of-day state under ensemble-mean rain, for the website's rain slider). Run after 9_wb_fit.py."""
+works' start-of-day state under ensemble-mean rain, for the website's rain slider). Run after 07_wb_fit.py."""
 import importlib.util
 import json
 import os
@@ -21,7 +21,7 @@ from common import DATA_END, INT
 import wb
 
 DAYS, DRAWS = 7, 4
-spec = importlib.util.spec_from_file_location("wbfit", os.path.join(os.path.dirname(os.path.abspath(__file__)), "9_wb_fit.py"))
+spec = importlib.util.spec_from_file_location("wbfit", os.path.join(os.path.dirname(os.path.abspath(__file__)), "07_wb_fit.py"))
 wbfit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(wbfit)
 inp, lab, si, ldays, local_day, udays, utc_day, pet_h, wet_h = wbfit.drivers()

@@ -24,7 +24,7 @@ def norm(s):
 
 
 ET0 = os.path.join(RAW, "openmeteo", "et0_oxford_daily.csv")
-if not os.path.exists(ET0) or pd.read_csv(ET0, skiprows=3).iloc[:, 0].max() < DATA_END[:10]:   # daily FAO reference evaporation at Oxford (wb.py soil store); refetched when the data is extended. ERA5 lags ~5 days; missing days are carried forward in 9_wb_fit.py
+if not os.path.exists(ET0) or pd.read_csv(ET0, skiprows=3).iloc[:, 0].max() < DATA_END[:10]:   # daily FAO reference evaporation at Oxford (wb.py soil store); refetched when the data is extended. ERA5 lags ~5 days; missing days are carried forward in 07_wb_fit.py
     import urllib.request
     url = ("https://archive-api.open-meteo.com/v1/archive?latitude=51.75&longitude=-1.26&start_date=2022-01-01"
            f"&end_date={DATA_END[:10]}&daily=et0_fao_evapotranspiration,precipitation_sum&timezone=Europe%2FLondon&format=csv")

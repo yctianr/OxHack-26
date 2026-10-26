@@ -1,10 +1,10 @@
-# 10 · Water quality: is the river safe to swim in, and safe for fish?
+# Water quality: is the river safe to swim in, and safe for fish?
 
-The river page (`web/river.html`) estimates **E. coli** and **ammonia** every 100 m of river around Oxford, for every day of the test year and the 7-day forecast. Concentrations are what the river carries **while a sewage spill upstream passes**. They come from the physics model's spills, typical concentrations in storm sewage, dilution by the day's river flow, and decay on the way downstream. They are model estimates, not measurements.
+The river map (`web/index.html`) estimates **E. coli** and **ammonia** every 100 m of river around Oxford, for every day of the test year and the 7-day forecast. Concentrations are what the river carries **while a sewage spill upstream passes**. They come from the physics model's spills, typical concentrations in storm sewage, dilution by the day's river flow, and decay on the way downstream. They are model estimates, not measurements.
 
 Code: `scripts/web/quality.py` → `web/data/quality.json`; the page does the arithmetic for the chosen day.
 
-In the page's **What if** mode the spill days and rates come from the physics model rerun in the browser (`web/data/physics.json`) with your rainfall, storm-tank and capacity changes: a works counts as spilling at a 50%+ chance, at its modelled volume ÷ spill-hours.
+In the map's **What if** mode the spill days and rates come from the physics model rerun in the browser (`web/data/physics.json`) with your rainfall, storm-tank and capacity changes: a works counts as spilling at a 50%+ chance, at its modelled volume ÷ spill-hours.
 
 ## Method
 

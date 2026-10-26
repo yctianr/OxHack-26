@@ -1,6 +1,6 @@
-"""Evaluate the water balance (9_wb_fit.py) against the statistical core on exactly the same held-out site-days.
+"""Evaluate the water balance (07_wb_fit.py) against the statistical core on exactly the same held-out site-days.
 
-Explain task only (observed weather, no observed spill state), the same rows as 5_evaluate.py's eval_predictions.
+Explain task only (observed weather, no observed spill state), the same rows as 04_stat_evaluate.py's eval_predictions.
   wb   = water balance + one fitted number (where the overflow starts)
   wb1  = water balance alone, spilling assumed to start at the measured capacity (no spill records at all)
   core = the 4-parameter logistic core; gbm = gradient boosting with the same information

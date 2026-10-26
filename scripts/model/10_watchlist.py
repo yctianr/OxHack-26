@@ -1,4 +1,4 @@
-"""Regulator watchlist: which treatment works spill when the evidence says they shouldn't. Writes web/watchlist/data.json.
+"""Regulator watchlist: which treatment works spill when the evidence says they shouldn't. Writes data/interim/watchlist.json.
 
 Two independent lines of evidence per works, both "leads to check", never findings of a breach:
   A. Spilling while treating below the permit. Permits require a works to keep treating its flow to full treatment
@@ -10,13 +10,13 @@ Two independent lines of evidence per works, both "leads to check", never findin
      spilling while both the statistical model and the physics-only water balance (spilling starts at capacity, no
      spill records used) gave under 5% chance from the rain and wetness.
 Context from Thames Water's own 2025 EDM return: asset type, stated reason for high spilling, investigation and
-improvement activity. Run from the repo root after scripts/model/8_wb_prep.py, 9_wb_fit.py and 10_wb_evaluate.py."""
+improvement activity. Run from the repo root after scripts/model/06_wb_prep.py, 07_wb_fit.py and 08_wb_evaluate.py."""
 import json
 import os
 import numpy as np
 import pandas as pd
 
-INT, RAW, OUT = "data/interim", "data/raw", "web/watchlist"
+INT, RAW = "data/interim", "data/raw"
 TZ = "Europe/London"
 PERMIT_SHARE = 0.92            # permit compliance: flow above 92% of FFT while discharging
 SCREEN_SHARE = 0.80            # lead threshold: margin for outlet metering and daily averaging
@@ -112,7 +112,6 @@ for p, w in W.iterrows():
     out[-1]["lon"], out[-1]["lat"] = round(float(s.lon), 5), round(float(s.lat), 5)
 
 out.sort(key=lambda d: ({"strong": 0, "moderate": 1, "low": 2, "insufficient": 3}[d["level"]], -d["score"]))
-os.makedirs(OUT, exist_ok=True)
 meta = dict(days=[d.strftime("%Y-%m-%d") for d in days], permit_share=PERMIT_SHARE, screen_share=SCREEN_SHARE, all_day_h=ALL_DAY_H,
             unexplained_p=UNEXPLAINED_P, test_window=["2024-10-01", str(M.date.max().date())],
             totals=dict(works=len(out), strong=sum(d["level"] == "strong" for d in out),
@@ -122,10 +121,8 @@ meta = dict(days=[d.strftime("%Y-%m-%d") for d in days], permit_share=PERMIT_SHA
                         allday_days=sum(d["allday_days"] for d in out),
                         unexplained_days=sum(d["unexplained_days"] for d in out),
                         no_investigation=sum((d["tw_investigation"] or "").startswith("No investigation") and d["level"] in ("strong", "moderate") for d in out)))
-# main rivers for the locator map (from scripts/web/data.py output), every 3rd vertex
-rivers = [dict(n=r["n"], p=[[q[0], q[1]] for q in r["p"][::3] + [r["p"][-1]]]) for r in json.load(open("web/data/rivers.json")) if r["m"]]
-json.dump(dict(meta=meta, works=out, rivers=rivers), open(os.path.join(OUT, "data.json"), "w"), separators=(",", ":"))
+json.dump(dict(meta=meta, works=out), open(os.path.join(INT, "watchlist.json"), "w"), separators=(",", ":"))
 pd.set_option("display.width", 220)
 print(pd.DataFrame(out)[["name", "level", "score", "allday_days", "well_below_days", "below_permit_days", "median_allday_pct_fft", "unexplained_days",
                          "spill_days_test", "tw_reason", "tw_investigation"]].to_string(index=False))
-print(meta["totals"], f"{os.path.getsize(os.path.join(OUT, 'data.json')) / 1e6:.2f} MB")
+print(meta["totals"], f"{os.path.getsize(os.path.join(INT, 'watchlist.json')) / 1e6:.2f} MB")

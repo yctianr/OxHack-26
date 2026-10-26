@@ -5,7 +5,7 @@ number from training-period spill records: the inflow at which the overflow star
 For every UTC day it then simulates an ensemble and writes P(any spill), expected spill-hours and spill volume,
 for the full model (wb_*) and for stage 1 alone with spilling assumed to start at capacity (wb1_*)
 (data/interim/wb_predictions.pkl), simulated vs measured daily treated flow (wb_flow.pkl), plus fitted parameters in physical units (data/interim/wb_params.csv).
-Usage: python scripts/model/9_wb_fit.py [permit ...]   (default: all works not marked "drop")"""
+Usage: python scripts/model/07_wb_fit.py [permit ...]   (default: all works not marked "drop")"""
 import os
 import sys
 import warnings

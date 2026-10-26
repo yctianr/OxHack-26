@@ -1,4 +1,4 @@
-"""Writes web/data/stats.json from data/interim/eval_predictions.pkl (run 5_evaluate.py first)."""
+"""Writes web/data/stats.json from data/interim/eval_predictions.pkl (run 04_stat_evaluate.py first)."""
 import pandas as pd, numpy as np, json
 TE=pd.read_pickle('data/interim/eval_predictions.pkl'); out={}
 for f,d in TE.groupby('fold'):
@@ -8,7 +8,7 @@ for f,d in TE.groupby('fold'):
     out[f]=dict(sites=int(d.site.nunique()),days=int(len(d)),start=str(d.date.min().date()),end=str(d.date.max().date()),brier=m,
         cal=[[round(a,4),round(b,4),int(n)] for n,a,b in cal[['n','p','o']].values],obs_h=round(float(d.h.sum())),exp_h=round(float(d.core_hours.sum())))
 json.dump(out,open('web/data/stats.json','w'))
-# physics water balance (main model) vs the statistical backup, on the same held-out works and days (run 9_wb_fit.py first)
+# physics water balance (main model) vs the statistical backup, on the same held-out works and days (run 07_wb_fit.py first)
 from sklearn.metrics import roc_auc_score
 WB=pd.read_pickle('data/interim/wb_predictions.pkl')
 M=TE.merge(WB[['site','fold','date','wb1_p','wb1_hours']],on=['site','fold','date'])
