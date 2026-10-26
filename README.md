@@ -11,7 +11,7 @@ Devpost: <https://devpost.com/software/waisted-m0ylrd>
 
 ## The problem
 
-The UK government and water companies are investing over £100 billion in water infrastructure, much of it to cut storm overflows, yet sewage was released into England's rivers nearly 300,000 times in 2025. When heavy rain fills the sewers faster than a treatment works can cope, the extra is released untreated into rivers and streams: human waste, condoms, sanitary products and industrial chemicals.
+The UK government and water companies are investing over £100 billion in water infrastructure, yet sewage was released into England's rivers nearly 300,000 times in 2025. When heavy rain fills the sewers faster than a treatment works can cope, the extra is released untreated into rivers and streams: human waste, condoms, sanitary products and industrial chemicals.
 
 Sewage spills have become a national scandal. Regulation of the water companies has been too lax for too long, and river quality has suffered, with real harm to wildlife and to the people who swim in them.
 
