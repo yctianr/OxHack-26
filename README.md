@@ -4,9 +4,9 @@
 
 🥈 Runner-up, HRT prize for *Best Use of Data for Predictions and Decision Making*, OxHack 2026.
 
-**Live site: <https://waisted.netlify.app>**
+**Live site: <https://waisted.pages.dev>**
 
-[![River map: works spilling on 25 Oct 2026, the rivers they reach, and the E. coli they carry](docs/img/river-map.jpg)](https://waisted.netlify.app)
+[![River map: works spilling on 25 Oct 2026, the rivers they reach, and the E. coli they carry](docs/img/river-map.jpg)](https://waisted.pages.dev)
 
 ## The problem
 
@@ -89,7 +89,7 @@ Scored on a year neither model was trained on (Oct 2025 – Oct 2026), at 52 wor
 ## Repository
 
 ```
-web/                  the live site (https://waisted.netlify.app): index.html (river map, forecast, what-if), model.html (method and backtest), data/
+web/                  the live site (https://waisted.pages.dev): index.html (river map, forecast, what-if), model.html (method and backtest), data/
 scripts/fetch.py      downloads spill alerts and EA rain and river-flow gauges into data/raw/
 scripts/model/        01–10 in order: sites, audit, clean data, statistical model, water balance, forecast, watchlist
                       wb.py the water balance · common.py shared code · tanks.csv sourced storm-tank volumes
